@@ -1,0 +1,72 @@
+<div class="dashboard-layout">
+  <a href="https://www.google.pt" class="quick-exit">SAÍDA RÁPIDA 🏃💨</a>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Apoio Vítima</div>
+    <nav>
+      <ul>
+        <li><a (click)="setSection('info')">🏠 Início / Contactos</a></li>
+        <li><a (click)="setSection('criar')">📝 Criar Pedido</a></li>
+        <li><a (click)="setSection('meus-pedidos')">📂 Meus Pedidos</a></li>
+        
+        <li *ngIf="isAdmin">
+          <a (click)="setSection('todos-pedidos')" style="color: #ffcc00; font-weight: bold;">
+            🌍 Ver Todos os Pedidos (ADM)
+          </a>
+        </li>
+
+        <li><a (click)="setSection('status')">📊 Status do Pedido</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="content-area">
+    
+    <header style="margin-bottom: 30px; text-align: center;">
+      <h1>{{ nomeutilizador | saudacao }}</h1>
+      <h4>Bem-vinda(o), a sua página de apoio.</h4>
+    </header>
+
+    <div *ngIf="activeSection === 'info'" class="centered-content">
+      <h2 class="title">Linhas de Apoio Imediato</h2>
+      
+      <div class="cards-grid">
+        <div class="card" *ngFor="let c of contatos">
+          <span class="card-icon">{{ c.icon }}</span>
+          <h3>{{ c.nome }}</h3>
+          <p>{{ c.descricao }}</p>
+          <a [href]="'tel:' + c.numero" class="btn-call">Ligar {{ c.numero }}</a>
+        </div>
+      </div>
+
+      <div class="panic-zone">
+        <h3>Pedidos Rápidos de Socorro 🚨</h3>
+        <div class="panic-buttons">
+          <button *ngFor="let alerta of alertasRapidos" 
+                  (click)="enviarPedido(alerta)" 
+                  class="btn-panic">
+            {{ alerta }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'criar'" class="centered-content">
+      <div class="form-container">
+        <h2>Novo Pedido de Ajuda</h2>
+        <textarea [(ngModel)]="mensagemLivre" placeholder="Descreva a sua situação detalhadamente..."></textarea>
+        <button class="btn-send" (click)="enviarPedido(mensagemLivre)">Enviar Relato</button>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'meus-pedidos' || activeSection === 'todos-pedidos' || activeSection === 'status'" class="centered-content">
+      <h2 *ngIf="activeSection === 'todos-pedidos'">Painel de Gestão (Todos os Pedidos)</h2>
+      <h2 *ngIf="activeSection === 'meus-pedidos'">Os Meus Pedidos</h2>
+      
+      <div class="list-container">
+        <p>Área de listagem em integração com o Supabase...</p>
+        </div>
+    </div>
+
+  </main>
+</div>

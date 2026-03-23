@@ -1,0 +1,77 @@
+/* Reset de margens para evitar espaços brancos indesejados */
+:host {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+.page-container {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #FDF9F5; /* Creme de fundo */
+  min-height: 100vh;
+}
+
+/* Hero: Onde a cor Terracota domina */
+.hero {
+  background-color: #A65D47; /* O Terracota da sua paleta */
+  color: #FFFFFF;
+  padding: 120px 20px;
+  text-align: center;
+  border-bottom: 8px solid #8A9A8E; /* Detalhe em Verde Acinzentado */
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  margin: 0 0 20px 0;
+  font-weight: 700;
+  letter-spacing: -1px;
+}
+
+.hero p {
+  font-size: 1.3rem;
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+/* Botão de destaque */
+.btn-primary {
+  background-color: #FFFFFF;
+  color: #A65D47;
+  padding: 18px 45px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  transition: transform 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+}
+
+/* Cards de Informação */
+.cards-section {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  padding: 60px 20px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.card h3 {
+  color: #8A9A8E; /* Verde da paleta */
+  margin-top: 0;
+}
