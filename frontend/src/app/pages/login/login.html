@@ -1,0 +1,70 @@
+<div class="login-container">
+  <div class="login-box">
+    <div class="login-header">
+      <span class="eyebrow">ACESSO SEGURO</span>
+      <h2>Acesso à Plataforma</h2>
+      <p class="subtitle">
+        Crie a sua conta de forma segura e anónima. Ninguém saberá que está aqui.
+      </p>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
+    </div>
+
+    <form (submit)="$event.preventDefault()">
+      <div class="input-group">
+        <label for="nome">Nome Completo (opcional)</label>
+        <input
+          type="text"
+          id="nome"
+          name="nomeCompleto"
+          [(ngModel)]="nomeCompleto"
+          placeholder="Seu nome completo"
+        >
+      </div>
+
+      <div class="input-group">
+        <label for="email">E-mail</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          [(ngModel)]="email"
+          placeholder="exemplo@email.com"
+        >
+      </div>
+
+      <div class="input-group">
+        <label for="password">Palavra-passe</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          [(ngModel)]="password"
+          placeholder="Sua senha"
+        >
+      </div>
+
+      <div class="button-stack">
+        <button
+          type="button"
+          (click)="handleLogin()"
+          [disabled]="loading"
+          class="btn-login"
+        >
+          {{ loading ? 'A entrar...' : 'Entrar' }}
+        </button>
+
+        <button
+          type="button"
+          (click)="handleSignUp()"
+          [disabled]="loading"
+          class="btn-register"
+        >
+          {{ loading ? 'A processar...' : 'Criar nova conta' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
