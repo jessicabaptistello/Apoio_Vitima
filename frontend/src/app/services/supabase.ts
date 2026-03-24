@@ -6,30 +6,68 @@ import { environment } from '../../environments/environment.development';
   providedIn: 'root'
 })
 export class SupabaseService {
-  private supabase: SupabaseClient;
+  public supabase: SupabaseClient;
 
   constructor() {
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
-  }
-
-  // Login simples
-  async signIn(email: string, pass: string) {
-    return await this.supabase.auth.signInWithPassword({
-      email,
-      password: pass,
+    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey, {
+      auth: {
+        persistSession: true,  
+        detectSessionInUrl: true
+      }
     });
   }
 
-  // Registo com o nome completo nos metadados
-  async signUp(email: string, pass: string, fullName: string) {
+  async signIn(email: string, password: string) {
+    return await this.supabase.auth.signInWithPassword({ email, password });
+  }
+
+  async signUp(email: string, password: string, fullName: string, role?: string) {
     return await this.supabase.auth.signUp({
       email,
-      password: pass,
+      password,
       options: {
         data: {
-          full_name: fullName // Aqui é onde o nome fica guardado
+          full_name: fullName,
+          role: role ?? 'user'
         }
       }
     });
+  }
+
+  async signOut() {
+    return await this.supabase.auth.signOut();
+  }
+
+  async getUser() {
+    const { data } = await this.supabase.auth.getUser();
+    return data.user;
+  }
+
+  async criarPedido(descricao: string) {
+    const user = await this.getUser();
+    if (!user) return { error: new Error('Usuário não autenticado') };
+
+    return await this.supabase
+      .from('pedidos')
+      .insert([{ titulo: 'Pedido de Ajuda', descricao, user_id: user.id }]);
+  }
+
+  async obterPedidos() {
+    const user = await this.getUser();
+    if (!user) return [];
+
+    const role = user.user_metadata?.['role'] ?? 'user';
+
+    if (role === 'admin') {
+      const { data } = await this.supabase.from('pedidos').select('*').order('id', { ascending: false });
+      return data || [];
+    } else {
+      const { data } = await this.supabase
+        .from('pedidos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('id', { ascending: false });
+      return data || [];
+    }
   }
 }

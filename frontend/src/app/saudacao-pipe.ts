@@ -8,13 +8,13 @@ export class SaudacaoPipe implements PipeTransform {
     const hora = new Date().getHours();
 
     if (hora < 12) {
-      return `"bom dia", ${nome}`;
+      return `Bom dia, ${nome}`;
     }
 
     if (hora < 18) {
-      return `"bom tarde", ${nome}`;
+      return `Boa tarde, ${nome}`;
     }
-      return `"Boa noite", ${nome}`;
+      return `Boa noite, ${nome}`;
     
     }
   }

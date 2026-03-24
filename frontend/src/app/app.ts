@@ -9,5 +9,4 @@ import { RouterOutlet } from '@angular/router';
   styleUrls: ['./app.css']
 })
 export class AppComponent {
-  // Classe vazia para manter a tua lógica original intacta
 }

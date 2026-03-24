@@ -1,77 +1,147 @@
-/* Reset de margens para evitar espaços brancos indesejados */
-:host {
-  display: block;
-  margin: 0;
-  padding: 0;
-}
-
 .page-container {
-  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  background-color: #FDF9F5; /* Creme de fundo */
   min-height: 100vh;
+  background: #f6f3ef;
+  color: #3d3131;
+  font-family: Arial, sans-serif;
 }
 
-/* Hero: Onde a cor Terracota domina */
 .hero {
-  background-color: #A65D47; /* O Terracota da sua paleta */
-  color: #FFFFFF;
-  padding: 120px 20px;
-  text-align: center;
-  border-bottom: 8px solid #8A9A8E; /* Detalhe em Verde Acinzentado */
+  padding: 24px 60px 50px;
 }
 
-.hero h1 {
-  font-size: 3.5rem;
-  margin: 0 0 20px 0;
-  font-weight: 700;
-  letter-spacing: -1px;
-}
-
-.hero p {
-  font-size: 1.3rem;
-  max-width: 700px;
-  margin: 0 auto 40px auto;
-  opacity: 0.9;
-  line-height: 1.6;
-}
-
-/* Botão de destaque */
-.btn-primary {
-  background-color: #FFFFFF;
-  color: #A65D47;
-  padding: 18px 45px;
-  border: none;
-  border-radius: 4px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-  transition: transform 0.2s;
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-}
-
-/* Cards de Informação */
-.cards-section {
+.topbar {
   display: flex;
-  justify-content: center;
-  gap: 30px;
-  padding: 60px 20px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 80px;
+}
+
+.brand {
+  font-size: 2rem;
+  margin: 0;
+  font-family: Georgia, serif;
+  color: #3d3131;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.link-login {
+  text-decoration: none;
+  color: #3d3131;
+  font-weight: 500;
+}
+
+.btn-top {
+  text-decoration: none;
+  background: #7ea08b;
+  color: white;
+  padding: 12px 18px;
+  border-radius: 18px;
+  font-weight: 700;
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.content .eyebrow {
+  display: inline-block;
+  color: #c78557;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 18px;
+}
+
+.content h2 {
+  font-family: Georgia, serif;
+  font-size: 3.5rem;
+  line-height: 1.1;
+  margin: 0 0 20px;
+}
+
+.content p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #726866;
+}
+
+.hero-buttons {
+  margin-top: 30px;
+}
+
+.btn-primary {
+  border: none;
+  padding: 14px 30px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #7ea08b;
+  color: white;
+}
+
+.help-section {
+  padding: 30px 60px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.section-header h2 {
+  font-family: Georgia, serif;
+  font-size: 2.8rem;
+}
+
+.section-header p {
+  color: #7a706d;
+}
+
+.cards-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 26px;
 }
 
 .card {
-  background: white;
-  padding: 40px;
-  border-radius: 8px;
-  width: 320px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  text-align: center;
+  border: 1px solid #ddd2ca;
+  border-radius: 24px;
+  padding: 30px;
+}
+
+.icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: #eef1eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
 }
 
 .card h3 {
-  color: #8A9A8E; /* Verde da paleta */
-  margin-top: 0;
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+}
+
+.card p {
+  color: #746a66;
+}
+
+@media (max-width: 900px) {
+  .cards-section {
+    grid-template-columns: 1fr;
+  }
 }

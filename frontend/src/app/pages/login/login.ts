@@ -13,7 +13,7 @@ import { environment } from '../../../environments/environment.development';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  // Variáveis ligadas ao formulário HTML
+ 
   nomeCompleto: string = '';
   email: string = '';
   password: string = '';
@@ -23,13 +23,13 @@ export class LoginComponent {
 
   private supabase: SupabaseClient;
 
-  // O Router permite que o Angular mude de página após o sucesso
+  
   constructor(private router: Router) {
     this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
   }
 
   async handleLogin() {
-    // Log de diagnóstico para verificar os dados no console
+   
     console.log('Dados enviados:', { email: this.email, senha: this.password });
 
     if (!this.email || !this.password) {
@@ -48,18 +48,18 @@ export class LoginComponent {
 
       if (error) throw error;
       
-      // Login validado com sucesso pelo Supabase
+      
       alert('Login realizado com sucesso!');
       
-      // Redireciona o utilizador para a área interna
+      
       this.router.navigate(['/dashboard']); 
 
     } catch (error: any) {
-      // Exibe o erro (ex: credenciais inválidas ou e-mail não confirmado)
+      
       this.errorMessage = error.message;
       console.error('Erro Supabase:', error);
     } finally {
-      // Independentemente do resultado, o botão para de carregar
+      
       this.loading = false;
     }
   }
@@ -78,7 +78,7 @@ export class LoginComponent {
       });
 
       if (error) throw error;
-      alert('Registo solicitado! Verifique o painel do Supabase.');
+      alert('Registo solicitado!');
     } catch (error: any) {
       this.errorMessage = error.message;
     } finally {
