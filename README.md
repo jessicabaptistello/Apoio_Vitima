@@ -2,14 +2,14 @@
 
 Aplicação web que permite a utilizadores registarem pedidos de apoio relacionados com situações de risco, violência ou necessidade urgente, acompanhando o estado de cada pedido.
 
-## 🌍 ODS
+##  ODS
 
 ODS 16 — Paz, Justiça e Instituições Eficazes
 Este projeto contribui para facilitar o registo e acompanhamento de pedidos de ajuda, promovendo o acesso a apoio em situações vulneráveis.
 
 ---
 
-## 🛠️ Stack Tecnológica
+##  Stack Tecnológica
 
 * Angular
 * Node.js + Express
@@ -19,7 +19,7 @@ Este projeto contribui para facilitar o registo e acompanhamento de pedidos de a
 
 ---
 
-## ⚙️ Como correr o projeto
+##  Como correr o projeto
 
 ### Backend
 
@@ -40,7 +40,7 @@ http://localhost:4200/
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### GET /pedidos
 
@@ -74,7 +74,7 @@ Remove um pedido
 
 ---
 
-## 🗄️ Base de Dados
+## Base de Dados
 
 Tabela: pedidos
 
@@ -89,7 +89,7 @@ Campos:
 
 ---
 
-## 📸 Testes com Postman
+##  Testes com Postman
 
 ### GET todos os pedidos
 
@@ -112,7 +112,7 @@ Campos:
 ![GETAPOSDELETE](./getaposdelete.png)
 ---
 
-## ✅ Funcionalidades
+##  Funcionalidades
 
 * Criar pedidos de apoio
 * Listar pedidos
@@ -122,7 +122,7 @@ Campos:
 
 ---
 
-## 📌 Estado do Projeto
+##  Estado do Projeto
 
 Backend funcional ✔️
-Frontend em desenvolvimento 🚧
+Frontend em desenvolvimento 
