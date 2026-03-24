@@ -1,0 +1,108 @@
+<div class="dashboard-layout">
+
+  <a (click)="logout()" class="quick-exit">SAÍDA RÁPIDA</a>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Refúgio</div>
+
+    <nav>
+      <ul>
+        <li><a (click)="setSection('info')">Início / Contactos</a></li>
+        <li><a (click)="setSection('criar')">Pedido de Ajuda</a></li>
+        <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
+
+        <li *ngIf="isAdmin">
+          <a (click)="setSection('todos-pedidos')" class="admin-link">
+            Ver Todos os Pedidos (ADM)
+          </a>
+        </li>
+
+        <li><a (click)="setSection('status')">Status do Pedido</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="content-area">
+    <header class="dashboard-header">
+      <span class="eyebrow">ÁREA SEGURA</span>
+      <h1>{{ nomeutilizador | saudacao }}</h1>
+      <h4>Bem-vinda(o), a sua página de apoio.</h4>
+    </header>
+
+    <div *ngIf="activeSection === 'info'" class="centered-content">
+      <h2 class="section-title">Linhas de Apoio Imediato</h2>
+
+      <div class="cards-grid">
+        <div class="card" *ngFor="let c of contatos">
+          <h3>{{ c.nome }}</h3>
+          <p>{{ c.descricao }}</p>
+          <a [href]="'tel:' + c.numero" class="btn-call">Ligar {{ c.numero }}</a>
+        </div>
+      </div>
+
+      <div class="panic-zone">
+        <h3>Pedidos Rápidos de Socorro</h3>
+        <div class="panic-buttons">
+          <button
+            *ngFor="let alerta of alertasRapidos"
+            (click)="enviarPedido(alerta)"
+            class="btn-panic"
+          >
+            {{ alerta }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'criar'" class="centered-content">
+      <div class="form-container">
+        <span class="eyebrow">NOVO PEDIDO</span>
+        <h2>Novo Pedido de Ajuda</h2>
+        <textarea
+          [(ngModel)]="mensagemLivre"
+          placeholder="Descreva a sua situação detalhadamente..."
+        ></textarea>
+        <button class="btn-send" (click)="enviarPedido(mensagemLivre)">
+          Enviar Relato
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'meus-pedidos' || activeSection === 'todos-pedidos'" class="centered-content">
+      <h2 *ngIf="activeSection === 'meus-pedidos'" class="section-title">Os Meus Pedidos</h2>
+      <h2 *ngIf="activeSection === 'todos-pedidos'" class="section-title">Painel de Gestão (Todos os Pedidos)</h2>
+
+      <div class="list-container">
+        <div *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-info">
+            <span class="titulo">{{ pedido.titulo }}</span>
+            <span class="descricao">{{ pedido.descricao }}</span>
+          </div>
+
+          <div class="pedido-meta">
+            <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              {{ pedido.status }}
+            </span>
+
+            <div *ngIf="isAdmin" class="pedido-actions">
+              <button class="editar" (click)="editarPedido(pedido)">Editar</button>
+              <button class="apagar" (click)="apagarPedido(pedido)">Apagar</button>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="pedidos.length === 0" class="empty-state">
+          Ainda não existem pedidos para mostrar.
+        </p>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'status'" class="centered-content">
+      <div class="status-box">
+        <span class="eyebrow">EM BREVE</span>
+        <h2>Status do Pedido</h2>
+        <p>Esta área será usada para mostrar o acompanhamento e evolução do pedido.</p>
+      </div>
+    </div>
+  </main>
+</div>
