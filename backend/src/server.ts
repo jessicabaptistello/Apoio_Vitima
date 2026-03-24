@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 
 dotenv.config();
+
 const app = express();
 app.use(express.json());
 
@@ -11,34 +12,76 @@ const supabase = createClient(
   process.env.SUPABASE_KEY || ''
 );
 
-
 app.get('/', (req, res) => {
-  res.send('API de Apoio à Vítima: Online! ');
+  res.send('API de Apoio à Vítima: Online! ⚖️');
 });
+
 
 app.post('/pedidos', async (req, res) => {
   const { nome_vitima, contacto, tipo_apoio, descricao } = req.body;
+
+  if (!nome_vitima || !contacto || !tipo_apoio || !descricao) {
+    return res.status(400).json({
+      error: 'nome_vitima, contacto, tipo_apoio e descricao são obrigatórios'
+    });
+  }
+
   const { data, error } = await supabase
     .from('pedidos')
-    .insert([{ nome_vitima, contacto, tipo_apoio, descricao, status: 'Pendente' }])
+    .insert([
+      {
+        nome_vitima,
+        contacto,
+        tipo_apoio,
+        descricao,
+        status: 'Pendente'
+      }
+    ])
     .select();
 
-  if (error) return res.status(400).json(error);
-  res.status(201).json(data);
+  if (error) {
+    return res.status(400).json(error);
+  }
+
+  return res.status(201).json(data);
 });
 
 
 app.get('/pedidos', async (req, res) => {
-  const { data, error } = await supabase.from('pedidos').select('*');
-  if (error) return res.status(400).json(error);
-  res.status(200).json(data);
+  const { data, error } = await supabase
+    .from('pedidos')
+    .select('*');
+
+  if (error) {
+    return res.status(400).json(error);
+  }
+
+  return res.status(200).json(data);
 });
 
+app.get('/pedidos/:id', async (req, res) => {
+  const { id } = req.params;
 
+  const { data, error } = await supabase
+    .from('pedidos')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    return res.status(400).json(error);
+  }
+
+  return res.status(200).json(data);
+});
 
 app.patch('/pedidos/:id', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body; 
+  const { status } = req.body;
+
+  if (!status) {
+    return res.status(400).json({ error: 'O campo status é obrigatório' });
+  }
 
   const { data, error } = await supabase
     .from('pedidos')
@@ -46,21 +89,30 @@ app.patch('/pedidos/:id', async (req, res) => {
     .eq('id', id)
     .select();
 
-  if (error) return res.status(400).json(error);
-  res.status(200).json(data);
-});
+  if (error) {
+    return res.status(400).json(error);
+  }
 
+  return res.status(200).json(data);
+});
 
 app.delete('/pedidos/:id', async (req, res) => {
   const { id } = req.params;
+
   const { error } = await supabase
     .from('pedidos')
     .delete()
     .eq('id', id);
 
-  if (error) return res.status(400).json(error);
-  res.status(200).json({ mensagem: 'Pedido removido com sucesso!' });
+  if (error) {
+    return res.status(400).json(error);
+  }
+
+  return res.status(200).json({ mensagem: 'Pedido removido com sucesso!' });
 });
 
 const PORT = 3000;
-app.listen(PORT, () => console.log(` Servidor na porta ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(` Servidor na porta ${PORT}`);
+});

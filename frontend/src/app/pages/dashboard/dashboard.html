@@ -69,8 +69,13 @@
     </div>
 
     <div *ngIf="activeSection === 'meus-pedidos' || activeSection === 'todos-pedidos'" class="centered-content">
-      <h2 *ngIf="activeSection === 'meus-pedidos'" class="section-title">Os Meus Pedidos</h2>
-      <h2 *ngIf="activeSection === 'todos-pedidos'" class="section-title">Painel de Gestão (Todos os Pedidos)</h2>
+      <h2 *ngIf="activeSection === 'meus-pedidos'" class="section-title">
+        Os Meus Pedidos
+      </h2>
+
+      <h2 *ngIf="activeSection === 'todos-pedidos'" class="section-title">
+        Painel de Gestão (Todos os Pedidos)
+      </h2>
 
       <div class="list-container">
         <div *ngFor="let pedido of pedidos" class="pedido-card">
