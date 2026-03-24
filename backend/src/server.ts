@@ -17,6 +17,9 @@ app.get('/', (req, res) => {
 });
 
 
+  res.send('API de Apoio à Vítima: Online! ');
+});
+
 app.post('/pedidos', async (req, res) => {
   const { nome_vitima, contacto, tipo_apoio, descricao } = req.body;
 
@@ -43,6 +46,7 @@ app.post('/pedidos', async (req, res) => {
   if (error) return res.status(400).json(error);
   res.status(201).json(data);
 });
+
 
 app.get('/pedidos', async (req, res) => {
   const { data, error } = await supabase.from('pedidos').select('*');
@@ -72,6 +76,11 @@ app.patch('/pedidos/:id', async (req, res) => {
     return res.status(400).json({ error: 'O campo status é obrigatório' });
   }
 
+
+app.patch('/pedidos/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; 
+
   const { data, error } = await supabase
     .from('pedidos')
     .update({ status })
@@ -81,6 +90,7 @@ app.patch('/pedidos/:id', async (req, res) => {
   if (error) return res.status(400).json(error);
   res.status(200).json(data);
 });
+
 
 app.delete('/pedidos/:id', async (req, res) => {
   const { id } = req.params;
@@ -95,4 +105,5 @@ app.delete('/pedidos/:id', async (req, res) => {
 });
 
 const PORT = 3000;
+app.listen(PORT, () => console.log(` Servidor na porta ${PORT}`));
 app.listen(PORT, () => console.log(` Servidor na porta ${PORT}`));
