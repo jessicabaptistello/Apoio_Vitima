@@ -46,10 +46,6 @@ http://localhost:4200/
 
 Lista todos os pedidos de apoio
 
-### GET /pedidos/:id
-
-Obtém o detalhe de um pedido
-
 ### POST /pedidos
 
 Cria um novo pedido
@@ -64,13 +60,17 @@ Exemplo de body:
 }
 ```
 
-### PUT /pedidos/:id
+### PATCH /pedidos/:id
 
 Atualiza um pedido (ex: estado)
 
 ### DELETE /pedidos/:id
 
 Remove um pedido
+
+### GET /pedidos
+
+Lista todos os pedidos de apoio após o DELETE
 
 ---
 
