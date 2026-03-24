@@ -1,88 +1,61 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { environment } from '../../../environments/environment.development';
+import { Router, RouterLink } from '@angular/router';
+import { SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './login.html', 
+  imports: [CommonModule, FormsModule, RouterLink],
+  templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
- 
-  nomeCompleto: string = '';
   email: string = '';
   password: string = '';
-  
+  nomeCompleto: string = '';
   loading: boolean = false;
   errorMessage: string = '';
 
-  private supabase: SupabaseClient;
-
-  
-  constructor(private router: Router) {
-    this.supabase = createClient(environment.supabaseUrl, environment.supabaseKey);
-  }
+  constructor(
+    private supabaseService: SupabaseService,
+    private router: Router
+  ) {}
 
   async handleLogin() {
-   
-    console.log('Dados enviados:', { email: this.email, senha: this.password });
-
-    if (!this.email || !this.password) {
-      this.errorMessage = "Por favor, preencha o e-mail e a senha.";
-      return;
-    }
-
     this.loading = true;
     this.errorMessage = '';
 
-    try {
-      const { data, error } = await this.supabase.auth.signInWithPassword({
-        email: this.email,
-        password: this.password
-      });
+    const { error } = await this.supabaseService.signIn(this.email, this.password);
 
-      if (error) throw error;
-      
-      
-      alert('Login realizado com sucesso!');
-      
-      
-      this.router.navigate(['/dashboard']); 
-
-    } catch (error: any) {
-      
+    if (error) {
       this.errorMessage = error.message;
-      console.error('Erro Supabase:', error);
-    } finally {
-      
       this.loading = false;
+      return;
     }
+
+    this.loading = false;
+    this.router.navigate(['/dashboard']);
   }
 
   async handleSignUp() {
     this.loading = true;
     this.errorMessage = '';
 
-    try {
-      const { data, error } = await this.supabase.auth.signUp({
-        email: this.email,
-        password: this.password,
-        options: {
-          data: { full_name: this.nomeCompleto }
-        }
-      });
+    const { error } = await this.supabaseService.signUp(
+      this.email,
+      this.password,
+      this.nomeCompleto
+    );
 
-      if (error) throw error;
-      alert('Registo solicitado!');
-    } catch (error: any) {
+    if (error) {
       this.errorMessage = error.message;
-    } finally {
       this.loading = false;
+      return;
     }
+
+    alert('Conta criada com sucesso! Agora pode entrar.');
+    this.loading = false;
   }
 }
