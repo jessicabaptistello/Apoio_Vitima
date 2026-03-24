@@ -1,174 +1,128 @@
-# (Em construção)
+# Sistema de Pedidos de Apoio à Vítima
 
-#  SafeSpace — Diretório de Apoio à Vítima
+Aplicação web que permite a utilizadores registarem pedidos de apoio relacionados com situações de risco, violência ou necessidade urgente, acompanhando o estado de cada pedido.
 
-##  ODS Associado
+## 🌍 ODS
 
-**ODS 16 — Paz, Justiça e Instituições Eficazes**
-
-Este projeto contribui para o ODS 16 ao facilitar o acesso à informação sobre serviços de apoio a vítimas de crime e violência. A aplicação promove o acesso à justiça e a instituições de apoio, permitindo que qualquer pessoa encontre rapidamente ajuda adequada à sua situação.
-
----
-
-##  Descrição
-
-O **SafeSpace** é uma aplicação web que funciona como um diretório centralizado de recursos de apoio a vítimas. Muitas vítimas não sabem a quem recorrer em situações de risco — esta plataforma resolve esse problema ao reunir associações, linhas de apoio e serviços organizados por tipo e localização.
-
-A aplicação permite pesquisar recursos, visualizar contactos detalhados e sugerir novos serviços, promovendo uma abordagem colaborativa e acessível. O objetivo é fornecer uma ferramenta simples, rápida e eficaz para ajudar pessoas em momentos críticos.
-
----
-
-##  Screenshot
-
-X
+ODS 16 — Paz, Justiça e Instituições Eficazes
+Este projeto contribui para facilitar o registo e acompanhamento de pedidos de ajuda, promovendo o acesso a apoio em situações vulneráveis.
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
-| Camada        | Tecnologia            |
-| ------------- | --------------------- |
-| Frontend      | Angular + TypeScript  |
-| Backend       | Node.js + Express     |
-| Base de Dados | Supabase (PostgreSQL) |
-| Autenticação  | Supabase Auth (JWT)   |
-| Deploy FE     | Vercel / Netlify      |
-| Deploy BE     | Render                |
-| CI/CD         | GitHub Actions        |
-| Versionamento | Git + GitHub          |
+* Angular
+* Node.js + Express
+* Supabase (PostgreSQL)
+* GitHub
+* Postman
 
 ---
 
-## ⚙️ Como correr o projeto localmente
+## ⚙️ Como correr o projeto
 
-### 1. Clonar o repositório
-
-```bash
-git clone X
-cd X
-```
-
-### 2. Backend
+### Backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env
 npm run dev
 ```
 
-### 3. Frontend
+### Frontend
 
 ```bash
-cd frontend
-npm install
 ng serve
 ```
 
-### 4. Aceder à aplicação
-
-```
-http://localhost:4200
-```
+Depois abrir no browser:
+http://localhost:4200/
 
 ---
 
-##  Variáveis de Ambiente
+## 🔌 API Endpoints
 
-Criar um ficheiro `.env` no backend com base no `.env.example`:
+### GET /pedidos
 
-```env
-PORT=3000
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-JWT_SECRET=your_jwt_secret
-```
+Lista todos os pedidos de apoio
 
----
+### GET /pedidos/:id
 
-##  URL em Produção
+Obtém o detalhe de um pedido
 
-X
+### POST /pedidos
 
----
+Cria um novo pedido
 
-## Funcionalidades Implementadas
+Exemplo de body:
 
-*  Autenticação (registo e login com email/password)
-*  CRUD de recursos de apoio
-
-  * Criar recurso
-  * Listar recursos
-  * Ver detalhes
-  * Editar
-  * Eliminar
-*  Pesquisa por palavra-chave
-* Filtro por tipo de apoio e distrito
-*  Página de detalhe com contactos completos
-*  Sistema de sugestão de novos recursos (pendentes)
-*  Acesso autenticado para criação e gestão
-
----
-
-##  Decisão de Design
-
-Foi utilizada a **Supabase** como solução de base de dados e autenticação, em vez de implementar autenticação manual com JWT puro.
-
-Esta decisão permite:
-
-* Reduzir complexidade no backend
-* Garantir segurança com autenticação já testada
-* Integrar facilmente com PostgreSQL
-* Acelerar o desenvolvimento
-
-Assim, foi possível focar mais tempo na lógica da aplicação e experiência do utilizador.
-
----
-
-##  Estrutura do Projeto
-
-```
-safehelp/
-│
-├── backend/
-│   ├── src/
-│   ├── routes/
-│   ├── controllers/
-│   └── ...
-│
-├── frontend/
-│   ├── src/
-│   ├── app/
-│   └── ...
-│
-└── README.md
+```json
+{
+  "titulo": "Pedido de Apoio",
+  "descricao": "Preciso de ajuda urgente",
+  "status": "Pendente"
+}
 ```
 
----
+### PUT /pedidos/:id
 
-## Testes
+Atualiza um pedido (ex: estado)
 
-Executar testes no backend:
+### DELETE /pedidos/:id
 
-```bash
-npm test
-```
-
-Inclui pelo menos 3 testes unitários para validação de funcionalidades principais.
+Remove um pedido
 
 ---
 
-## CI/CD
+## 🗄️ Base de Dados
 
-Pipeline configurado com **GitHub Actions** para:
+Tabela: pedidos
 
-* ✔️ Lint do código
-* ✔️ Build automático
-* ✔️ Verificação antes de merge
+Campos:
+
+* id
+* user_id
+* titulo
+* descricao
+* status (Pendente, Em Atendimento, Concluído)
+* created_at
 
 ---
 
-## Autor
+## 📸 Testes com Postman
 
-Jessica de Araujo Baptistello
+### GET todos os pedidos
 
+![GET](./get.png)
+
+### POST criar pedido
+
+![POST](./post.png)
+
+### PATCH atualizar pedido
+
+![PATCH](./patch.png)
+
+### DELETE pedido
+
+![DELETE](./delete.png)
+
+### GET após DELETE
+
+![GETAPOSDELETE](./getaposdelete.png)
+---
+
+## ✅ Funcionalidades
+
+* Criar pedidos de apoio
+* Listar pedidos
+* Ver detalhe de cada pedido
+* Atualizar estado (pendente, em atendimento, concluído)
+* Eliminar pedidos
+
+---
+
+## 📌 Estado do Projeto
+
+Backend funcional ✔️
+Frontend em desenvolvimento 🚧
