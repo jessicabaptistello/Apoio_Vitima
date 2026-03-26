@@ -22,7 +22,17 @@
   <main class="apoio-content">
     <section class="search-section">
       <div class="search-box">
-        <label for="distrito">Pesquisar por distrito</label>
+        <label for="pesquisa">Pesquisa rápida</label>
+        <input
+          id="pesquisa"
+          type="text"
+          [(ngModel)]="pesquisa"
+          placeholder="Pesquisar por nome, tipo ou distrito"
+        >
+      </div>
+
+      <div class="search-box">
+        <label for="distrito">Filtrar por distrito</label>
         <input
           id="distrito"
           type="text"
@@ -30,26 +40,91 @@
           placeholder="Ex.: Braga, Porto, Lisboa..."
         >
       </div>
+
+      <div class="search-box">
+        <label for="tipo">Filtrar por tipo</label>
+        <select id="tipo" [(ngModel)]="filtroTipo">
+          <option value="">Todos</option>
+          <option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
+            {{ tipo }}
+          </option>
+        </select>
+      </div>
     </section>
 
     <section class="cards-section">
-      <div class="apoio-card" *ngFor="let recurso of recursosFiltrados">
-        <div class="card-top">
-          <span class="district-badge">{{ recurso.distrito }}</span>
-          <h3>{{ recurso.nome }}</h3>
-        </div>
-
-        <p class="tipo"><strong>Tipo:</strong> {{ recurso.tipo }}</p>
-        <p class="descricao">{{ recurso.descricao }}</p>
-        <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
-        <p>
-          <strong>Website:</strong>
-          <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
-        </p>
+      <div *ngIf="carregando" class="empty-state">
+        A carregar recursos...
       </div>
 
-      <div *ngIf="recursosFiltrados.length === 0" class="empty-state">
-        Nenhum recurso encontrado para esse distrito.
+      <ng-container *ngIf="!carregando">
+        <div class="apoio-card" *ngFor="let recurso of recursosFiltrados">
+          <div class="card-top">
+            <span class="district-badge">{{ recurso.distrito }}</span>
+            <h3>{{ recurso.nome }}</h3>
+          </div>
+
+          <p class="tipo"><strong>Tipo:</strong> {{ recurso.tipo }}</p>
+          <p class="descricao">{{ recurso.descricao }}</p>
+          <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
+          <p>
+            <strong>Website:</strong>
+            <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
+          </p>
+        </div>
+
+        <div *ngIf="recursosFiltrados.length === 0" class="empty-state">
+          Nenhum recurso encontrado com os filtros informados.
+        </div>
+      </ng-container>
+    </section>
+
+    <section class="form-section">
+      <div class="form-container">
+        <span class="eyebrow">SUGERIR NOVO RECURSO</span>
+        <h2>Conhece uma organização ou linha de apoio?</h2>
+        <p>
+          Pode sugerir um novo recurso para ser analisado. Após validação, ficará disponível no diretório.
+        </p>
+
+        <input
+          type="text"
+          [(ngModel)]="novoRecurso.nome"
+          placeholder="Nome do recurso"
+        >
+
+        <input
+          type="text"
+          [(ngModel)]="novoRecurso.tipo"
+          placeholder="Tipo de apoio"
+        >
+
+        <input
+          type="text"
+          [(ngModel)]="novoRecurso.contacto"
+          placeholder="Contacto"
+        >
+
+        <input
+          type="text"
+          [(ngModel)]="novoRecurso.website"
+          placeholder="Website"
+        >
+
+        <input
+          type="text"
+          [(ngModel)]="novoRecurso.distrito"
+          placeholder="Distrito"
+        >
+
+        <textarea
+          [(ngModel)]="novoRecurso.descricao"
+          placeholder="Descrição do recurso"
+        ></textarea>
+
+        <button class="btn-send" (click)="sugerirNovoRecurso()">
+          Enviar sugestão
+        </button>
       </div>
     </section>
   </main>

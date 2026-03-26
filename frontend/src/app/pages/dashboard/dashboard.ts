@@ -1,14 +1,13 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { SaudacaoPipe } from '../../saudacao-pipe';
 import { SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SaudacaoPipe],
+  imports: [CommonModule, FormsModule, SaudacaoPipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
@@ -22,10 +21,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authSubscription: any;
 
   contatos = [
-    { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas'},
-    { nome: 'GNR / PSP', numero: '112', descricao: 'Seguranca Imediata'},
-    { nome: 'SNS 24', numero: '808242424', descricao: 'Apoio Medico'},
-    { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico'}
+    { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas' },
+    { nome: 'GNR / PSP', numero: '112', descricao: 'Seguranca Imediata' },
+    { nome: 'SNS 24', numero: '808242424', descricao: 'Apoio Medico' },
+    { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico' }
   ];
 
   alertasRapidos = [
@@ -35,13 +34,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     'Preciso de abrigo.'
   ];
 
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   async ngOnInit() {
     await this.inicializarDashboard();
 
     const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async () => {
       await this.inicializarDashboard();
+      this.cdr.detectChanges();
     });
 
     this.authSubscription = data.subscription;
@@ -57,20 +60,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     await this.carregarUsuario();
     await this.carregarPedidos();
 
-    // pequena segunda tentativa, para garantir que o nome aparece logo após login
     setTimeout(async () => {
       await this.carregarUsuario();
+      this.cdr.detectChanges();
     }, 300);
   }
 
   async carregarUsuario() {
     const user = await this.supabaseService.getUser();
-    if (!user) return;
+
+    if (!user) {
+      this.nomeutilizador = 'Utilizador';
+      this.isAdmin = false;
+      this.cdr.detectChanges();
+      return;
+    }
 
     const metadata = user.user_metadata || {};
     this.nomeutilizador = metadata['full_name'] || 'Utilizador';
     this.isAdmin = (metadata['role'] ?? '') === 'admin';
-    console.log('Usuário carregado:', user);
+    this.cdr.detectChanges();
   }
 
   setSection(section: string) {
@@ -93,20 +102,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async carregarPedidos() {
     this.pedidos = await this.supabaseService.obterPedidos();
-    console.log('Pedidos carregados no dashboard:', this.pedidos);
+    this.cdr.detectChanges();
   }
 
-  async logout() {
-    const { error } = await this.supabaseService.signOut();
+  logout(event: Event) {
+    const confirmar = confirm('Tem a certeza que deseja sair?');
 
-    if (error) {
-      console.error('Erro ao sair:', error.message);
-      alert('Erro ao encerrar sessão');
+    if (!confirmar) {
+      event.preventDefault();
       return;
     }
 
+    this.supabaseService.signOut();
+
+    this.nomeutilizador = 'Utilizador';
+    this.isAdmin = false;
+    this.pedidos = [];
+    this.cdr.detectChanges();
+
     alert('Sessão encerrada!');
-    window.location.assign('https://www.google.pt');
   }
 
   async apagarPedido(pedido: any) {

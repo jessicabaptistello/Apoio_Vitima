@@ -152,4 +152,49 @@ export class SupabaseService {
 
     return data || [];
   }
+
+  async obterRecursos() {
+    const { data, error } = await this.supabase
+      .from('recursos')
+      .select('*')
+      .eq('status', 'aprovado')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao carregar recursos:', error.message);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  async sugerirRecurso(
+    nome: string,
+    tipo: string,
+    contacto: string,
+    website: string,
+    distrito: string,
+    descricao: string
+  ) {
+    const { data, error } = await this.supabase
+      .from('recursos')
+      .insert([
+        {
+          nome,
+          tipo,
+          contacto,
+          website,
+          distrito,
+          descricao,
+          status: 'pendente'
+        }
+      ])
+      .select();
+
+    if (error) {
+      console.error('Erro ao sugerir recurso:', error.message);
+    }
+
+    return { data, error };
+  }
 }

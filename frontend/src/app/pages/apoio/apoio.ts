@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-apoio',
@@ -10,69 +11,97 @@ import { FormsModule } from '@angular/forms';
   templateUrl: './apoio.html',
   styleUrls: ['./apoio.css']
 })
-export class ApoioComponent {
+export class ApoioComponent implements OnInit {
   filtroDistrito: string = '';
+  filtroTipo: string = '';
+  pesquisa: string = '';
 
-  recursos = [
-    {
-      distrito: 'Braga',
-      nome: 'APAV Braga',
-      tipo: 'Apoio psicológico e jurídico',
-      contacto: '116 006',
-      website: 'https://www.apav.pt',
-      descricao: 'Apoio especializado a vítimas de crime e violência.'
-    },
-    {
-      distrito: 'Porto',
-      nome: 'APAV Porto',
-      tipo: 'Apoio social e emocional',
-      contacto: '116 006',
-      website: 'https://www.apav.pt',
-      descricao: 'Orientação, escuta e encaminhamento para serviços de proteção.'
-    },
-    {
-      distrito: 'Lisboa',
-      nome: 'CIG Lisboa',
-      tipo: 'Apoio à violência doméstica',
-      contacto: '800 202 148',
-      website: 'https://www.cig.gov.pt',
-      descricao: 'Linha e recursos de apoio em situações de violência doméstica.'
-    },
-    {
-      distrito: 'Coimbra',
-      nome: 'APAV Coimbra',
-      tipo: 'Apoio jurídico',
-      contacto: '116 006',
-      website: 'https://www.apav.pt',
-      descricao: 'Acompanhamento e informação sobre direitos e proteção.'
-    },
-    {
-      distrito: 'Faro',
-      nome: 'GAV Faro',
-      tipo: 'Apoio psicológico',
-      contacto: '800 202 148',
-      website: 'https://www.cig.gov.pt',
-      descricao: 'Apoio emocional e encaminhamento para rede local.'
-    },
-    {
-      distrito: 'Aveiro',
-      nome: 'APAV Aveiro',
-      tipo: 'Apoio social',
-      contacto: '116 006',
-      website: 'https://www.apav.pt',
-      descricao: 'Acolhimento e informação para vítimas em situação vulnerável.'
+  recursos: any[] = [];
+  carregando: boolean = true;
+
+  novoRecurso = {
+    nome: '',
+    tipo: '',
+    contacto: '',
+    website: '',
+    distrito: '',
+    descricao: ''
+  };
+
+  constructor(private supabaseService: SupabaseService) {}
+
+  async ngOnInit() {
+    await this.carregarRecursos();
+  }
+
+  async carregarRecursos() {
+    this.carregando = true;
+
+    try {
+      this.recursos = await this.supabaseService.obterRecursos();
+    } catch (error) {
+      console.error('Erro ao carregar recursos:', error);
+      this.recursos = [];
+    } finally {
+      this.carregando = false;
     }
-  ];
+  }
+
+  get tiposDisponiveis(): string[] {
+    const tipos = this.recursos.map((recurso) => recurso.tipo);
+    return [...new Set(tipos)].sort();
+  }
 
   get recursosFiltrados() {
-    const termo = this.filtroDistrito.trim().toLowerCase();
+    const distrito = this.filtroDistrito.trim().toLowerCase();
+    const tipo = this.filtroTipo.trim().toLowerCase();
+    const termo = this.pesquisa.trim().toLowerCase();
 
-    if (!termo) {
-      return this.recursos;
+    return this.recursos.filter((recurso) => {
+      const matchDistrito = !distrito || recurso.distrito?.toLowerCase().includes(distrito);
+      const matchTipo = !tipo || recurso.tipo?.toLowerCase() === tipo;
+      const matchPesquisa =
+        !termo ||
+        recurso.nome?.toLowerCase().includes(termo) ||
+        recurso.tipo?.toLowerCase().includes(termo) ||
+        recurso.distrito?.toLowerCase().includes(termo) ||
+        recurso.descricao?.toLowerCase().includes(termo);
+
+      return matchDistrito && matchTipo && matchPesquisa;
+    });
+  }
+
+  async sugerirNovoRecurso() {
+    const { nome, tipo, contacto, website, distrito, descricao } = this.novoRecurso;
+
+    if (!nome || !tipo || !contacto || !website || !distrito) {
+      alert('Preencha nome, tipo, contacto, website e distrito.');
+      return;
     }
 
-    return this.recursos.filter((recurso) =>
-      recurso.distrito.toLowerCase().includes(termo)
+    const { error } = await this.supabaseService.sugerirRecurso(
+      nome,
+      tipo,
+      contacto,
+      website,
+      distrito,
+      descricao
     );
+
+    if (error) {
+      alert('Erro ao enviar sugestão: ' + error.message);
+      return;
+    }
+
+    alert('Sugestão enviada com sucesso! O recurso ficará pendente até aprovação.');
+
+    this.novoRecurso = {
+      nome: '',
+      tipo: '',
+      contacto: '',
+      website: '',
+      distrito: '',
+      descricao: ''
+    };
   }
 }

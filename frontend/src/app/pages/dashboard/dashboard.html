@@ -1,6 +1,12 @@
 <div class="dashboard-layout">
 
-  <button type="button" (click)="logout()" class="quick-exit">SAÍDA RÁPIDA</button>
+  <a
+    href="https://www.google.pt"
+    (click)="logout($event)"
+    class="quick-exit"
+  >
+    SAÍDA RÁPIDA
+  </a>
 
   <aside class="sidebar">
     <div class="sidebar-logo">Refúgio</div>
@@ -18,7 +24,6 @@
         </li>
 
         <li><a (click)="setSection('status')">Status do Pedido</a></li>
-        <li><a routerLink="/apoio">Apoio por Distrito</a></li>
       </ul>
     </nav>
   </aside>
@@ -51,10 +56,6 @@
           >
             {{ alerta }}
           </button>
-        </div>
-
-        <div style="margin-top: 18px;">
-          <a routerLink="/apoio" class="btn-call">Ver Apoio por Distrito</a>
         </div>
       </div>
     </div>
