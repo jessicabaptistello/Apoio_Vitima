@@ -1,0 +1,56 @@
+<div class="apoio-page">
+  <header class="apoio-header">
+    <nav class="topbar">
+      <h1 class="brand">Refúgio</h1>
+
+      <div class="topbar-actions">
+        <a routerLink="/" class="btn-outline">Voltar ao início</a>
+        <a routerLink="/login" class="btn-top">Entrar</a>
+      </div>
+    </nav>
+
+    <div class="hero-content">
+      <span class="eyebrow">RECURSOS DE APOIO</span>
+      <h2>Apoio por Distrito</h2>
+      <p>
+        Consulte recursos de apoio organizados por distrito e encontre ajuda
+        mais próxima, de forma simples e discreta.
+      </p>
+    </div>
+  </header>
+
+  <main class="apoio-content">
+    <section class="search-section">
+      <div class="search-box">
+        <label for="distrito">Pesquisar por distrito</label>
+        <input
+          id="distrito"
+          type="text"
+          [(ngModel)]="filtroDistrito"
+          placeholder="Ex.: Braga, Porto, Lisboa..."
+        >
+      </div>
+    </section>
+
+    <section class="cards-section">
+      <div class="apoio-card" *ngFor="let recurso of recursosFiltrados">
+        <div class="card-top">
+          <span class="district-badge">{{ recurso.distrito }}</span>
+          <h3>{{ recurso.nome }}</h3>
+        </div>
+
+        <p class="tipo"><strong>Tipo:</strong> {{ recurso.tipo }}</p>
+        <p class="descricao">{{ recurso.descricao }}</p>
+        <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
+        <p>
+          <strong>Website:</strong>
+          <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
+        </p>
+      </div>
+
+      <div *ngIf="recursosFiltrados.length === 0" class="empty-state">
+        Nenhum recurso encontrado para esse distrito.
+      </div>
+    </section>
+  </main>
+</div>

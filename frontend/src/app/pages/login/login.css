@@ -57,6 +57,16 @@
   font-size: 0.95rem;
 }
 
+.success-banner {
+  background: #eef7f0;
+  color: #2f6b46;
+  padding: 12px 14px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+  border: 1px solid #c8e4d0;
+  font-size: 0.95rem;
+}
+
 .input-group {
   text-align: left;
   margin-bottom: 18px;

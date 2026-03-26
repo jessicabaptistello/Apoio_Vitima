@@ -1,25 +1,28 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { SaudacaoPipe } from '../../saudacao-pipe';
 import { SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, SaudacaoPipe],
+  imports: [CommonModule, FormsModule, RouterLink, SaudacaoPipe],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   nomeutilizador: string = 'Utilizador';
   isAdmin: boolean = false;
   activeSection: string = 'info';
   mensagemLivre: string = '';
   pedidos: any[] = [];
 
+  private authSubscription: any;
+
   contatos = [
-    { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas' },
+    { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas'},
     { nome: 'GNR / PSP', numero: '112', descricao: 'Seguranca Imediata'},
     { nome: 'SNS 24', numero: '808242424', descricao: 'Apoio Medico'},
     { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico'}
@@ -35,8 +38,29 @@ export class DashboardComponent implements OnInit {
   constructor(private supabaseService: SupabaseService) {}
 
   async ngOnInit() {
+    await this.inicializarDashboard();
+
+    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async () => {
+      await this.inicializarDashboard();
+    });
+
+    this.authSubscription = data.subscription;
+  }
+
+  ngOnDestroy() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+  }
+
+  async inicializarDashboard() {
     await this.carregarUsuario();
     await this.carregarPedidos();
+
+    // pequena segunda tentativa, para garantir que o nome aparece logo após login
+    setTimeout(async () => {
+      await this.carregarUsuario();
+    }, 300);
   }
 
   async carregarUsuario() {
@@ -64,7 +88,6 @@ export class DashboardComponent implements OnInit {
       alert('Pedido enviado! A ajuda está a caminho.');
       this.mensagemLivre = '';
       await this.carregarPedidos();
-      this.activeSection = 'meus-pedidos';
     }
   }
 
@@ -79,10 +102,11 @@ export class DashboardComponent implements OnInit {
     if (error) {
       console.error('Erro ao sair:', error.message);
       alert('Erro ao encerrar sessão');
-    } else {
-      alert('Sessão encerrada!');
-      window.location.href = 'https://www.google.pt';
+      return;
     }
+
+    alert('Sessão encerrada!');
+    window.location.assign('https://www.google.pt');
   }
 
   async apagarPedido(pedido: any) {
@@ -128,15 +152,11 @@ export class DashboardComponent implements OnInit {
 
     const valor = status.toLowerCase().trim();
 
-    if (valor.includes('pendente')) {
-      return 'status-pendente';
-    }
+    if (valor.includes('pendente')) return 'status-pendente';
 
     if (
-      valor.includes('em andamento') ||
       valor.includes('andamento') ||
-      valor.includes('em análise') ||
-      valor.includes('em analise') ||
+      valor.includes('análise') ||
       valor.includes('analise')
     ) {
       return 'status-em-andamento';
@@ -145,8 +165,7 @@ export class DashboardComponent implements OnInit {
     if (
       valor.includes('concluído') ||
       valor.includes('concluido') ||
-      valor.includes('resolvido') ||
-      valor.includes('finalizado')
+      valor.includes('resolvido')
     ) {
       return 'status-concluido';
     }

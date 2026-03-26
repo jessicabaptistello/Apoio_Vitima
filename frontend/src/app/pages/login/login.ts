@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login.html',
   styleUrls: ['./login.css']
 })
@@ -15,8 +15,12 @@ export class LoginComponent {
   email: string = '';
   password: string = '';
   nomeCompleto: string = '';
-  loading: boolean = false;
+
+  loadingLogin: boolean = false;
+  loadingSignUp: boolean = false;
+
   errorMessage: string = '';
+  successMessage: string = '';
 
   constructor(
     private supabaseService: SupabaseService,
@@ -24,24 +28,26 @@ export class LoginComponent {
   ) {}
 
   async handleLogin() {
-    this.loading = true;
+    this.loadingLogin = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     const { error } = await this.supabaseService.signIn(this.email, this.password);
 
     if (error) {
       this.errorMessage = error.message;
-      this.loading = false;
+      this.loadingLogin = false;
       return;
     }
 
-    this.loading = false;
-    this.router.navigate(['/dashboard']);
+    this.loadingLogin = false;
+    await this.router.navigate(['/dashboard']);
   }
 
   async handleSignUp() {
-    this.loading = true;
+    this.loadingSignUp = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     const { error } = await this.supabaseService.signUp(
       this.email,
@@ -51,11 +57,15 @@ export class LoginComponent {
 
     if (error) {
       this.errorMessage = error.message;
-      this.loading = false;
+      this.loadingSignUp = false;
       return;
     }
 
-    alert('Conta criada com sucesso! Agora pode entrar.');
-    this.loading = false;
+    this.loadingSignUp = false;
+    this.successMessage = 'Conta criada com sucesso! Agora pode clicar em "Entrar".';
+  }
+
+  usarDadosParaLogin() {
+    this.successMessage = '';
   }
 }
