@@ -19,6 +19,13 @@ Este projeto contribui para facilitar o registo e acompanhamento de pedidos de a
 
 ---
 
+## Deploy
+
+* Backend online:
+
+https://apoio-vitima.onrender.com
+
+
 ##  Como correr o projeto
 
 ### Backend
