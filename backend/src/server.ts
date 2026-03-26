@@ -16,7 +16,6 @@ app.get('/', (req, res) => {
   res.send('API de Apoio à Vítima: Online! ⚖️');
 });
 
-
 app.post('/pedidos', async (req, res) => {
   const { nome_vitima, contacto, tipo_apoio, descricao } = req.body;
 
@@ -45,7 +44,6 @@ app.post('/pedidos', async (req, res) => {
 
   return res.status(201).json(data);
 });
-
 
 app.get('/pedidos', async (req, res) => {
   const { data, error } = await supabase
@@ -111,8 +109,8 @@ app.delete('/pedidos/:id', async (req, res) => {
   return res.status(200).json({ mensagem: 'Pedido removido com sucesso!' });
 });
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 10000;
 
-app.listen(PORT, () => {
-  console.log(` Servidor na porta ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor na porta ${PORT}`);
 });
