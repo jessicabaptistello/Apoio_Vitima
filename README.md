@@ -70,11 +70,11 @@ Tabela: Recursos
 Campos:
 
 * id
-* name
-* type
-* contact
+* nome
+* tipo
+* contacto
 * website
-* district
+* distrito
 
 Tabela: Pedidos 
 
@@ -140,7 +140,7 @@ Campos:
 * CRUD completo de recursos
 * Filtros por tipo e distrito
 * Pesquisa por palavra-chave
-* Sistema de sugestão (pendente)
+* Sistema de sugestão 
 
 ---
 
