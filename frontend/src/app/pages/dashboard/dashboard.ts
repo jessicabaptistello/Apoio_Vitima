@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { SaudacaoPipe } from '../../saudacao-pipe';
 import { SupabaseService } from '../../services/supabase';
 
@@ -15,11 +16,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
   nomeutilizador: string = 'Utilizador';
   isAdmin: boolean = false;
   activeSection: string = 'info';
-  mensagemLivre: string = '';
+
   pedidos: any[] = [];
   recursosPendentes: any[] = [];
 
   private authSubscription: any;
+
+  novoPedido = {
+    email: '',
+    tipo_pedido: '',
+    contacto: '',
+    distrito: '',
+    descricao: ''
+  };
+
+  tiposPedido: string[] = [
+    'Violência doméstica',
+    'Apoio psicológico',
+    'Apoio jurídico',
+    'Emergência',
+    'Informação geral',
+    'Outro'
+  ];
+
+  distritos: string[] = [
+    'Aveiro',
+    'Beja',
+    'Braga',
+    'Bragança',
+    'Castelo Branco',
+    'Coimbra',
+    'Évora',
+    'Faro',
+    'Guarda',
+    'Leiria',
+    'Lisboa',
+    'Portalegre',
+    'Porto',
+    'Santarém',
+    'Setúbal',
+    'Viana do Castelo',
+    'Vila Real',
+    'Viseu'
+  ];
+
+  statusOptions: string[] = [
+    'Pendente',
+    'Em análise',
+    'Encaminhado',
+    'Concluído'
+  ];
 
   contatos = [
     { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas' },
@@ -37,7 +83,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private supabaseService: SupabaseService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private router: Router
   ) {}
 
   async ngOnInit() {
@@ -90,7 +137,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   setSection(section: string) {
     this.activeSection = section;
 
-    if (section === 'meus-pedidos' || section === 'todos-pedidos') {
+    if (
+      section === 'meus-pedidos' ||
+      section === 'todos-pedidos' ||
+      section === 'status'
+    ) {
       this.carregarPedidos();
     }
 
@@ -99,22 +150,79 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async enviarPedido(mensagem: string) {
-    if (!mensagem) return;
+  async enviarPedido() {
+    const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
 
-    const { error } = await this.supabaseService.criarPedido(mensagem);
+    if (!email || !tipo_pedido || !contacto || !distrito || !descricao) {
+      alert('Preencha todos os campos do pedido.');
+      return;
+    }
+
+    const user = await this.supabaseService.getUser();
+
+    if (!user) {
+      alert('Utilizador não autenticado.');
+      return;
+    }
+
+    const { error } = await this.supabaseService.supabase
+      .from('pedidos')
+      .insert([
+        {
+          user_id: user.id,
+          email,
+          tipo_pedido,
+          contacto,
+          distrito,
+          descricao,
+          status: 'Pendente'
+        }
+      ]);
 
     if (error) {
+      console.error('Erro ao enviar pedido:', error);
       alert('Erro ao enviar pedido: ' + error.message);
     } else {
-      alert('Pedido enviado! A ajuda está a caminho.');
-      this.mensagemLivre = '';
+      alert('Pedido enviado com sucesso!');
+      this.novoPedido = {
+        email: '',
+        tipo_pedido: '',
+        contacto: '',
+        distrito: '',
+        descricao: ''
+      };
       await this.carregarPedidos();
+      this.activeSection = 'meus-pedidos';
     }
   }
 
   async carregarPedidos() {
-    this.pedidos = await this.supabaseService.obterPedidos();
+    const user = await this.supabaseService.getUser();
+
+    if (!user) {
+      this.pedidos = [];
+      this.cdr.detectChanges();
+      return;
+    }
+
+    let query = this.supabaseService.supabase
+      .from('pedidos')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!this.isAdmin) {
+      query = query.eq('user_id', user.id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Erro ao carregar pedidos:', error.message);
+      this.pedidos = [];
+    } else {
+      this.pedidos = data || [];
+    }
+
     this.cdr.detectChanges();
     console.log('Pedidos carregados no dashboard:', this.pedidos);
   }
@@ -123,6 +231,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recursosPendentes = await this.supabaseService.obterRecursosPendentes();
     this.cdr.detectChanges();
     console.log('Recursos pendentes carregados:', this.recursosPendentes);
+  }
+
+  verDetalhePedido(pedido: any) {
+    this.router.navigate(['/pedido', pedido.id]);
   }
 
   logout(event: Event) {
@@ -163,21 +275,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async editarPedido(pedido: any) {
+  async atualizarStatusPedido(pedido: any, novoStatus: string) {
     if (!this.isAdmin) return;
-
-    const novaDescricao = prompt('Digite a nova descrição:', pedido.descricao);
-    if (!novaDescricao) return;
+    if (!novoStatus) return;
 
     const { error } = await this.supabaseService.supabase
       .from('pedidos')
-      .update({ descricao: novaDescricao })
+      .update({ status: novoStatus })
       .eq('id', pedido.id);
 
     if (error) {
-      alert('Erro ao editar pedido: ' + error.message);
+      alert('Erro ao atualizar status: ' + error.message);
     } else {
-      alert('Pedido atualizado com sucesso!');
+      alert('Status atualizado com sucesso!');
       await this.carregarPedidos();
     }
   }
@@ -226,7 +336,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (
       valor.includes('andamento') ||
       valor.includes('análise') ||
-      valor.includes('analise')
+      valor.includes('analise') ||
+      valor.includes('encaminhado')
     ) {
       return 'status-em-andamento';
     }

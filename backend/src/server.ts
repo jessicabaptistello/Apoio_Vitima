@@ -21,11 +21,11 @@ app.get('/', (req, res) => {
 
 
 app.post('/pedidos', async (req, res) => {
-  const { nome_vitima, contacto, tipo_apoio, descricao } = req.body;
+  const { email, tipo_pedido, contacto, distrito, descricao } = req.body;
 
-  if (!nome_vitima || !contacto || !tipo_apoio || !descricao) {
+  if (!email || !tipo_pedido || !contacto || !distrito || !descricao) {
     return res.status(400).json({
-      error: 'nome_vitima, contacto, tipo_apoio e descricao são obrigatórios'
+      error: 'email, tipo_pedido, contacto, distrito e descricao são obrigatórios'
     });
   }
 
@@ -33,9 +33,10 @@ app.post('/pedidos', async (req, res) => {
     .from('pedidos')
     .insert([
       {
-        nome_vitima,
+        email,
+        tipo_pedido,
         contacto,
-        tipo_apoio,
+        distrito,
         descricao,
         status: 'Pendente'
       }

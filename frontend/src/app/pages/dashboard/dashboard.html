@@ -14,7 +14,6 @@
     <nav>
       <ul>
         <li><a (click)="setSection('info')">Início / Contactos</a></li>
-        <li><a (click)="setSection('criar')">Pedido de Ajuda</a></li>
         <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
 
         <li *ngIf="isAdmin">
@@ -41,7 +40,71 @@
       <h4>Bem-vinda(o), a sua página de apoio.</h4>
     </header>
 
+    <!-- INÍCIO / FORMULÁRIO + CONTACTOS -->
     <div *ngIf="activeSection === 'info'" class="centered-content">
+      <div class="form-container">
+        <span class="eyebrow">NOVO PEDIDO</span>
+        <h2>Pedido de Ajuda</h2>
+        <p class="form-subtitle">
+          Preencha os dados abaixo para registarmos o seu pedido e facilitar o encaminhamento para recursos adequados.
+        </p>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              [(ngModel)]="novoPedido.email"
+              placeholder="exemplo@email.com"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="tipo_pedido">Tipo de Pedido</label>
+            <select id="tipo_pedido" [(ngModel)]="novoPedido.tipo_pedido">
+              <option value="">Selecione uma opção</option>
+              <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                {{ tipo }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="contacto">Contacto</label>
+            <input
+              id="contacto"
+              type="text"
+              [(ngModel)]="novoPedido.contacto"
+              placeholder="912345678"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="distrito">Distrito</label>
+            <select id="distrito" [(ngModel)]="novoPedido.distrito">
+              <option value="">Selecione um distrito</option>
+              <option *ngFor="let distrito of distritos" [value]="distrito">
+                {{ distrito }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group descricao-group">
+          <label for="descricao">Descrição</label>
+          <textarea
+            id="descricao"
+            [(ngModel)]="novoPedido.descricao"
+            placeholder="Descreva a sua situação detalhadamente..."
+          ></textarea>
+        </div>
+
+        <button class="btn-send" (click)="enviarPedido()">
+          Enviar Pedido
+        </button>
+      </div>
+
       <h2 class="section-title">Linhas de Apoio Imediato</h2>
 
       <div class="cards-grid">
@@ -57,7 +120,6 @@
         <div class="panic-buttons">
           <button
             *ngFor="let alerta of alertasRapidos"
-            (click)="enviarPedido(alerta)"
             class="btn-panic"
           >
             {{ alerta }}
@@ -66,34 +128,22 @@
       </div>
     </div>
 
-    <div *ngIf="activeSection === 'criar'" class="centered-content">
-      <div class="form-container">
-        <span class="eyebrow">NOVO PEDIDO</span>
-        <h2>Novo Pedido de Ajuda</h2>
-        <textarea
-          [(ngModel)]="mensagemLivre"
-          placeholder="Descreva a sua situação detalhadamente..."
-        ></textarea>
-        <button class="btn-send" (click)="enviarPedido(mensagemLivre)">
-          Enviar Relato
-        </button>
-      </div>
-    </div>
-
-    <div *ngIf="activeSection === 'meus-pedidos' || activeSection === 'todos-pedidos'" class="centered-content">
-      <h2 *ngIf="activeSection === 'meus-pedidos'" class="section-title">
-        Os Meus Pedidos
-      </h2>
-
-      <h2 *ngIf="activeSection === 'todos-pedidos'" class="section-title">
-        Painel de Gestão (Todos os Pedidos)
-      </h2>
+    <!-- MEUS PEDIDOS -->
+    <div *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
+      <h2 class="section-title">Os Meus Pedidos</h2>
 
       <div class="list-container">
         <div *ngFor="let pedido of pedidos" class="pedido-card">
           <div class="pedido-info">
-            <span class="titulo">{{ pedido.titulo }}</span>
-            <span class="descricao">{{ pedido.descricao }}</span>
+            <span class="titulo">{{ pedido.tipo_pedido }}</span>
+
+            <div class="pedido-details">
+              <p><strong>Email:</strong> {{ pedido.email }}</p>
+              <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
+              <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+            </div>
+
+            <p class="descricao">{{ pedido.descricao }}</p>
           </div>
 
           <div class="pedido-meta">
@@ -101,9 +151,10 @@
               {{ pedido.status }}
             </span>
 
-            <div *ngIf="isAdmin" class="pedido-actions">
-              <button class="editar" (click)="editarPedido(pedido)">Editar</button>
-              <button class="apagar" (click)="apagarPedido(pedido)">Apagar</button>
+            <div class="pedido-actions">
+              <button class="editar" (click)="verDetalhePedido(pedido)">
+                Ver Detalhe
+              </button>
             </div>
           </div>
         </div>
@@ -114,6 +165,59 @@
       </div>
     </div>
 
+    <!-- TODOS OS PEDIDOS (SÓ ADM) -->
+    <div *ngIf="activeSection === 'todos-pedidos' && isAdmin" class="centered-content">
+      <h2 class="section-title">Painel de Gestão (Todos os Pedidos)</h2>
+
+      <div class="list-container">
+        <div *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-info">
+            <span class="titulo">{{ pedido.tipo_pedido }}</span>
+
+            <div class="pedido-details">
+              <p><strong>Email:</strong> {{ pedido.email }}</p>
+              <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
+              <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+            </div>
+
+            <p class="descricao">{{ pedido.descricao }}</p>
+          </div>
+
+          <div class="pedido-meta">
+            <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              {{ pedido.status }}
+            </span>
+
+            <div class="status-change-box">
+              <label>Alterar Status</label>
+              <select
+                [ngModel]="pedido.status"
+                (ngModelChange)="atualizarStatusPedido(pedido, $event)"
+              >
+                <option *ngFor="let status of statusOptions" [value]="status">
+                  {{ status }}
+                </option>
+              </select>
+            </div>
+
+            <div class="pedido-actions">
+              <button class="editar" (click)="verDetalhePedido(pedido)">
+                Ver Detalhe
+              </button>
+              <button class="apagar" (click)="apagarPedido(pedido)">
+                Apagar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="pedidos.length === 0" class="empty-state">
+          Ainda não existem pedidos para mostrar.
+        </p>
+      </div>
+    </div>
+
+    <!-- RECURSOS PENDENTES -->
     <div *ngIf="activeSection === 'recursos-pendentes'" class="centered-content">
       <h2 class="section-title">Recursos Pendentes de Aprovação</h2>
 
@@ -121,12 +225,15 @@
         <div *ngFor="let recurso of recursosPendentes" class="pedido-card">
           <div class="pedido-info">
             <span class="titulo">{{ recurso.nome }}</span>
-            <span class="descricao">
-              {{ recurso.tipo }} • {{ recurso.distrito }}
-            </span>
-            <span class="descricao">{{ recurso.contacto }}</span>
-            <span class="descricao">{{ recurso.website }}</span>
-            <span class="descricao">{{ recurso.descricao }}</span>
+
+            <div class="pedido-details">
+              <p><strong>Tipo:</strong> {{ recurso.tipo }}</p>
+              <p><strong>Distrito:</strong> {{ recurso.distrito }}</p>
+              <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
+              <p><strong>Website:</strong> {{ recurso.website || 'Não informado' }}</p>
+            </div>
+
+            <p class="descricao">{{ recurso.descricao }}</p>
           </div>
 
           <div class="pedido-meta">
@@ -147,11 +254,59 @@
       </div>
     </div>
 
+    <!-- STATUS -->
     <div *ngIf="activeSection === 'status'" class="centered-content">
-      <div class="status-box">
-        <span class="eyebrow">EM BREVE</span>
-        <h2>Status do Pedido</h2>
-        <p>Esta área será usada para mostrar o acompanhamento e evolução do pedido.</p>
+      <h2 class="section-title">Status dos Pedidos</h2>
+
+      <div class="list-container">
+        <div *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-info">
+            <span class="titulo">{{ pedido.tipo_pedido }}</span>
+
+            <div class="pedido-details">
+              <p><strong>Email:</strong> {{ pedido.email }}</p>
+              <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+            </div>
+
+            <p class="descricao">{{ pedido.descricao }}</p>
+          </div>
+
+          <div class="pedido-meta">
+            <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              {{ pedido.status }}
+            </span>
+
+            <div *ngIf="isAdmin" class="status-change-box">
+              <label>Alterar Status</label>
+              <select
+                [ngModel]="pedido.status"
+                (ngModelChange)="atualizarStatusPedido(pedido, $event)"
+              >
+                <option *ngFor="let status of statusOptions" [value]="status">
+                  {{ status }}
+                </option>
+              </select>
+            </div>
+
+            <div class="pedido-actions">
+              <button class="editar" (click)="verDetalhePedido(pedido)">
+                Ver Detalhe
+              </button>
+
+              <button
+                *ngIf="isAdmin"
+                class="apagar"
+                (click)="apagarPedido(pedido)"
+              >
+                Apagar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="pedidos.length === 0" class="empty-state">
+          Ainda não existem pedidos para mostrar.
+        </p>
       </div>
     </div>
   </main>
