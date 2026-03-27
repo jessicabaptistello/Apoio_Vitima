@@ -1,8 +1,10 @@
 [![CI](https://github.com/jessicabaptistello/Apoio_Vitima/actions/workflows/ci.yml/badge.svg)](https://github.com/jessicabaptistello/Apoio_Vitima/actions/workflows/ci.yml)
 
+![TypeScript](https://img.shields.io)
 ![Angular](https://img.shields.io/badge/Angular-21.2.0-emerald?logo=angular&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-blueviolet?logo=supabase&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-brightgreen?logo=docker&logoColor=white)
+[![Render Deploy Status](https://render-status-badge.vercel.app)](https://dashboard.render.com)
 
 # Diretório de Apoio à Vítima
 
