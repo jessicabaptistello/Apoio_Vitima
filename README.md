@@ -3,7 +3,7 @@
 ![Angular](https://img.shields.io/badge/Angular-21.2.0-emerald?logo=angular&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-blueviolet?logo=supabase&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-brightgreen?logo=docker&logoColor=white)
-[![Render Deploy Status](https://render-status-badge.vercel.app)](https://apoio-vitima.onrender.com)
+[![Status](https://img.shields.io/website?url=https%3A%2F%2Fapoio-vitima.onrender.com&short_id=01&label=status&color=brightgreen)](https://apoio-vitima.onrender.com)
 
 # Diretório de Apoio à Vítima
 
