@@ -114,9 +114,6 @@ app.delete('/pedidos/:id', async (req, res) => {
   return res.status(200).json({ mensagem: 'Pedido removido com sucesso!' });
 });
 
-/* =========================
-   ROTAS DA TABELA RECURSOS
-
 app.post('/recursos', async (req, res) => {
   const { nome, tipo, contacto, website, distrito, descricao, status } = req.body;
 
