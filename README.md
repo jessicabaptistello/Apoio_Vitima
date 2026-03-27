@@ -41,26 +41,29 @@ ng serve
 
 ##  API Endpoints
 
-### GET /resources
+### GET / RECURSOS E PEDIDOS
 
 Lista todos os recursos
 
-### GET /resources/:id
+### GET / RECURSOS POR ID 
 
 Obtém um recurso específico
 
-### POST /resources
+### POST  / RECURSOS E ID 
 
 Cria um novo recurso
 
-### PUT /resources/:id
+### PATCH / RECURSOS E ID
 
 Atualiza um recurso
 
-### DELETE /resources/:id
+### DELETE / RECURSOS E ID 
 
 Remove um recurso
 
+### GET / PEDIDOS APOS DELETE 
+
+Tenta obter um recurso específico após o delete deste 
 ---
 
 ## Base de Dados
