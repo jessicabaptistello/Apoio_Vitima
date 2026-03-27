@@ -87,6 +87,17 @@
   color: white;
 }
 
+.btn-secondary {
+  border: none;
+  padding: 14px 30px;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: #7ea08b;
+  color: white;
+}
+
 .help-section {
   padding: 30px 60px 80px;
   max-width: 1100px;

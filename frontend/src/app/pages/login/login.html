@@ -12,6 +12,10 @@
       {{ errorMessage }}
     </div>
 
+    <div *ngIf="successMessage" class="success-banner">
+      {{ successMessage }}
+    </div>
+
     <form (submit)="$event.preventDefault()">
       <div class="input-group">
         <label for="nome">Nome Completo (opcional)</label>
@@ -32,6 +36,7 @@
           name="email"
           [(ngModel)]="email"
           placeholder="exemplo@email.com"
+          (input)="usarDadosParaLogin()"
         >
       </div>
 
@@ -43,6 +48,7 @@
           name="password"
           [(ngModel)]="password"
           placeholder="Sua senha"
+          (input)="usarDadosParaLogin()"
         >
       </div>
 
@@ -50,19 +56,19 @@
         <button
           type="button"
           (click)="handleLogin()"
-          [disabled]="loading"
+          [disabled]="loadingLogin || loadingSignUp"
           class="btn-login"
         >
-          {{ loading ? 'A entrar...' : 'Entrar' }}
+          {{ loadingLogin ? 'A entrar...' : 'Entrar' }}
         </button>
 
         <button
           type="button"
           (click)="handleSignUp()"
-          [disabled]="loading"
+          [disabled]="loadingLogin || loadingSignUp"
           class="btn-register"
         >
-          {{ loading ? 'A processar...' : 'Criar nova conta' }}
+          {{ loadingSignUp ? 'A criar conta...' : 'Criar nova conta' }}
         </button>
       </div>
     </form>
