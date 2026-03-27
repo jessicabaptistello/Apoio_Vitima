@@ -71,6 +71,10 @@
             <strong>Website:</strong>
             <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
           </p>
+
+          <a [routerLink]="['/apoio', recurso.id]" class="btn-outline">
+            Ver detalhes
+          </a>
         </div>
 
         <div *ngIf="recursosFiltrados.length === 0" class="empty-state">

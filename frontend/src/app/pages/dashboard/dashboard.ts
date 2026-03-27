@@ -17,6 +17,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   activeSection: string = 'info';
   mensagemLivre: string = '';
   pedidos: any[] = [];
+  recursosPendentes: any[] = [];
 
   private authSubscription: any;
 
@@ -60,6 +61,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     await this.carregarUsuario();
     await this.carregarPedidos();
 
+    if (this.isAdmin) {
+      await this.carregarRecursosPendentes();
+    }
+
     setTimeout(async () => {
       await this.carregarUsuario();
       this.cdr.detectChanges();
@@ -84,6 +89,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   setSection(section: string) {
     this.activeSection = section;
+
+    if (section === 'meus-pedidos' || section === 'todos-pedidos') {
+      this.carregarPedidos();
+    }
+
+    if (section === 'recursos-pendentes' && this.isAdmin) {
+      this.carregarRecursosPendentes();
+    }
   }
 
   async enviarPedido(mensagem: string) {
@@ -103,6 +116,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async carregarPedidos() {
     this.pedidos = await this.supabaseService.obterPedidos();
     this.cdr.detectChanges();
+    console.log('Pedidos carregados no dashboard:', this.pedidos);
+  }
+
+  async carregarRecursosPendentes() {
+    this.recursosPendentes = await this.supabaseService.obterRecursosPendentes();
+    this.cdr.detectChanges();
+    console.log('Recursos pendentes carregados:', this.recursosPendentes);
   }
 
   logout(event: Event) {
@@ -118,6 +138,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.nomeutilizador = 'Utilizador';
     this.isAdmin = false;
     this.pedidos = [];
+    this.recursosPendentes = [];
     this.cdr.detectChanges();
 
     alert('Sessão encerrada!');
@@ -159,6 +180,40 @@ export class DashboardComponent implements OnInit, OnDestroy {
       alert('Pedido atualizado com sucesso!');
       await this.carregarPedidos();
     }
+  }
+
+  async aprovarRecurso(recurso: any) {
+    if (!this.isAdmin) return;
+
+    const confirmar = confirm(`Deseja aprovar o recurso "${recurso.nome}"?`);
+    if (!confirmar) return;
+
+    const { error } = await this.supabaseService.aprovarRecurso(recurso.id);
+
+    if (error) {
+      alert('Erro ao aprovar recurso: ' + error.message);
+      return;
+    }
+
+    alert('Recurso aprovado com sucesso!');
+    await this.carregarRecursosPendentes();
+  }
+
+  async rejeitarRecurso(recurso: any) {
+    if (!this.isAdmin) return;
+
+    const confirmar = confirm(`Deseja rejeitar/apagar o recurso "${recurso.nome}"?`);
+    if (!confirmar) return;
+
+    const { error } = await this.supabaseService.apagarRecursoPendente(recurso.id);
+
+    if (error) {
+      alert('Erro ao rejeitar recurso: ' + error.message);
+      return;
+    }
+
+    alert('Recurso rejeitado com sucesso!');
+    await this.carregarRecursosPendentes();
   }
 
   getStatusClass(status: string): string {
