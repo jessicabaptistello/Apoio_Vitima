@@ -12,16 +12,13 @@ const supabase = createClient(
   process.env.SUPABASE_KEY || ''
 );
 
-// Nome correto da tua nova tabela
+
 const NOVA_TABELA = 'recursos';
 
 app.get('/', (req, res) => {
   res.send('API de Apoio à Vítima: Online!');
 });
 
-/* =========================
-   ROTAS DA TABELA PEDIDOS
-========================= */
 
 app.post('/pedidos', async (req, res) => {
   const { nome_vitima, contacto, tipo_apoio, descricao } = req.body;
@@ -116,11 +113,7 @@ app.delete('/pedidos/:id', async (req, res) => {
   return res.status(200).json({ mensagem: 'Pedido removido com sucesso!' });
 });
 
-/* =========================
-   ROTAS DA TABELA RECURSOS
-========================= */
 
-// Criar recurso
 app.post('/recursos', async (req, res) => {
   const { nome, tipo, contacto, website, distrito, descricao, status } = req.body;
 
@@ -152,7 +145,7 @@ app.post('/recursos', async (req, res) => {
   return res.status(201).json(data);
 });
 
-// Listar recursos
+
 app.get('/recursos', async (req, res) => {
   const { data, error } = await supabase
     .from('recursos')
@@ -165,7 +158,7 @@ app.get('/recursos', async (req, res) => {
   return res.status(200).json(data);
 });
 
-// Buscar recurso por id
+
 app.get('/recursos/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -182,7 +175,7 @@ app.get('/recursos/:id', async (req, res) => {
   return res.status(200).json(data);
 });
 
-// Atualizar recurso completo
+
 app.put('/recursos/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, tipo, contacto, website, distrito, descricao, status } = req.body;
@@ -214,7 +207,7 @@ app.put('/recursos/:id', async (req, res) => {
   return res.status(200).json(data);
 });
 
-// Atualizar apenas status
+
 app.patch('/recursos/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -236,7 +229,7 @@ app.patch('/recursos/:id/status', async (req, res) => {
   return res.status(200).json(data);
 });
 
-// Remover recurso
+
 app.delete('/recursos/:id', async (req, res) => {
   const { id } = req.params;
 
