@@ -1,0 +1,240 @@
+:host {
+  --terracota: #a65d47;
+  --terracota-escura: #8f4d3a;
+  --verde-acinzentado: #8a9a8e;
+  --verde-suave: #eef3ef;
+  --creme-fundo: #fdf9f5;
+  --branco: #ffffff;
+  --texto-escuro: #2c3e50;
+  --texto-suave: #6b7280;
+  --borda-suave: #eadfd6;
+  --sombra: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.detalhe-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #fdf9f5 0%, #f8f2ec 100%);
+  color: var(--texto-escuro);
+  font-family: Arial, sans-serif;
+}
+
+.detalhe-header {
+  padding: 28px 40px 10px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand {
+  margin: 0;
+  font-size: 2rem;
+  font-family: Georgia, serif;
+  color: var(--terracota);
+  letter-spacing: 0.5px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.btn-top,
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-size: 0.96rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-top {
+  background: var(--terracota);
+  color: var(--branco);
+  border: none;
+  box-shadow: 0 8px 20px rgba(166, 93, 71, 0.18);
+}
+
+.btn-top:hover {
+  background: var(--terracota-escura);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--texto-escuro);
+  border: 1px solid var(--borda-suave);
+}
+
+.btn-outline:hover {
+  background: var(--branco);
+  transform: translateY(-1px);
+}
+
+.detalhe-content {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px 24px 80px;
+}
+
+.estado-box {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--borda-suave);
+  border-radius: 24px;
+  padding: 28px;
+  text-align: center;
+  color: var(--texto-suave);
+  box-shadow: var(--sombra);
+}
+
+.detalhe-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--borda-suave);
+  border-radius: 30px;
+  padding: 36px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.07);
+}
+
+.eyebrow {
+  display: inline-block;
+  margin-bottom: 14px;
+  color: var(--terracota);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+
+.card-top {
+  margin-bottom: 28px;
+}
+
+.district-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--verde-suave);
+  color: #5b7060;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.card-top h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 2.4rem;
+  line-height: 1.15;
+  color: var(--texto-escuro);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.info-item {
+  background: #fffdfb;
+  border: 1px solid var(--borda-suave);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--terracota);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.info-item p,
+.descricao-box p {
+  margin: 0;
+  color: var(--texto-escuro);
+  line-height: 1.7;
+}
+
+.info-item a,
+.descricao-box a {
+  color: var(--terracota);
+  font-weight: 700;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.info-item a:hover,
+.descricao-box a:hover {
+  text-decoration: underline;
+}
+
+.descricao-box {
+  background: #fffdfb;
+  border: 1px solid var(--borda-suave);
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 28px;
+}
+
+.acoes {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .detalhe-header {
+    padding: 22px 20px 10px;
+  }
+
+  .detalhe-content {
+    padding: 20px 16px 60px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topbar-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-top,
+  .btn-outline {
+    width: 100%;
+  }
+
+  .detalhe-card {
+    padding: 24px 18px;
+  }
+
+  .card-top h2 {
+    font-size: 1.9rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes {
+    flex-direction: column;
+  }
+}

@@ -197,4 +197,61 @@ export class SupabaseService {
 
     return { data, error };
   }
+
+  async obterRecursosPendentes() {
+    const user = await this.getUser();
+
+    if (!user) {
+      console.error('Nenhum utilizador autenticado');
+      return [];
+    }
+
+    const metadata = user.user_metadata || {};
+    const isAdmin = (metadata['role'] ?? '') === 'admin';
+
+    if (!isAdmin) {
+      console.error('Apenas admin pode ver recursos pendentes');
+      return [];
+    }
+
+    const { data, error } = await this.supabase
+      .from('recursos')
+      .select('*')
+      .eq('status', 'pendente')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao carregar recursos pendentes:', error.message);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  async aprovarRecurso(id: number) {
+    const { data, error } = await this.supabase
+      .from('recursos')
+      .update({ status: 'aprovado' })
+      .eq('id', id)
+      .select();
+
+    if (error) {
+      console.error('Erro ao aprovar recurso:', error.message);
+    }
+
+    return { data, error };
+  }
+
+  async apagarRecursoPendente(id: number) {
+    const { error } = await this.supabase
+      .from('recursos')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Erro ao apagar recurso pendente:', error.message);
+    }
+
+    return { error };
+  }
 }

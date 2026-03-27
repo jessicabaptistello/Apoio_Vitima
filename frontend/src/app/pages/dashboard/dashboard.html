@@ -23,6 +23,12 @@
           </a>
         </li>
 
+        <li *ngIf="isAdmin">
+          <a (click)="setSection('recursos-pendentes')" class="admin-link">
+            Aprovar Recursos (ADM)
+          </a>
+        </li>
+
         <li><a (click)="setSection('status')">Status do Pedido</a></li>
       </ul>
     </nav>
@@ -104,6 +110,39 @@
 
         <p *ngIf="pedidos.length === 0" class="empty-state">
           Ainda não existem pedidos para mostrar.
+        </p>
+      </div>
+    </div>
+
+    <div *ngIf="activeSection === 'recursos-pendentes'" class="centered-content">
+      <h2 class="section-title">Recursos Pendentes de Aprovação</h2>
+
+      <div class="list-container">
+        <div *ngFor="let recurso of recursosPendentes" class="pedido-card">
+          <div class="pedido-info">
+            <span class="titulo">{{ recurso.nome }}</span>
+            <span class="descricao">
+              {{ recurso.tipo }} • {{ recurso.distrito }}
+            </span>
+            <span class="descricao">{{ recurso.contacto }}</span>
+            <span class="descricao">{{ recurso.website }}</span>
+            <span class="descricao">{{ recurso.descricao }}</span>
+          </div>
+
+          <div class="pedido-meta">
+            <span class="status status-pendente">
+              {{ recurso.status }}
+            </span>
+
+            <div class="pedido-actions">
+              <button class="editar" (click)="aprovarRecurso(recurso)">Aprovar</button>
+              <button class="apagar" (click)="rejeitarRecurso(recurso)">Rejeitar</button>
+            </div>
+          </div>
+        </div>
+
+        <p *ngIf="recursosPendentes.length === 0" class="empty-state">
+          Não existem recursos pendentes no momento.
         </p>
       </div>
     </div>

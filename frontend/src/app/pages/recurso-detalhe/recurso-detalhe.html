@@ -1,0 +1,67 @@
+<div class="detalhe-page">
+  <header class="detalhe-header">
+    <nav class="topbar">
+      <h1 class="brand">Refúgio</h1>
+
+      <div class="topbar-actions">
+        <a routerLink="/apoio" class="btn-outline">Voltar aos recursos</a>
+        <a routerLink="/" class="btn-top">Página inicial</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="detalhe-content">
+    <div *ngIf="carregando" class="estado-box">
+      A carregar informações do recurso...
+    </div>
+
+    <div *ngIf="!carregando && !recurso" class="estado-box">
+      Recurso não encontrado.
+    </div>
+
+    <section *ngIf="!carregando && recurso" class="detalhe-card">
+      <span class="eyebrow">DETALHE DO RECURSO</span>
+
+      <div class="card-top">
+        <span class="district-badge">{{ recurso.distrito }}</span>
+        <h2>{{ recurso.nome }}</h2>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Tipo de apoio</span>
+          <p>{{ recurso.tipo }}</p>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Contacto</span>
+          <p>
+            <a [href]="'tel:' + recurso.contacto">{{ recurso.contacto }}</a>
+          </p>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Website</span>
+          <p>
+            <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
+          </p>
+        </div>
+
+        <div class="info-item">
+          <span class="label">Distrito</span>
+          <p>{{ recurso.distrito }}</p>
+        </div>
+      </div>
+
+      <div class="descricao-box">
+        <span class="label">Descrição</span>
+        <p>{{ recurso.descricao || 'Sem descrição disponível.' }}</p>
+      </div>
+
+      <div class="acoes">
+        <a [href]="'tel:' + recurso.contacto" class="btn-top">Contactar</a>
+        <a [href]="recurso.website" target="_blank" class="btn-outline">Visitar website</a>
+      </div>
+    </section>
+  </main>
+</div>

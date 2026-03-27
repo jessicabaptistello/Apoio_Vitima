@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +28,10 @@ export class ApoioComponent implements OnInit {
     descricao: ''
   };
 
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(
+    private supabaseService: SupabaseService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   async ngOnInit() {
     await this.carregarRecursos();
@@ -36,6 +39,7 @@ export class ApoioComponent implements OnInit {
 
   async carregarRecursos() {
     this.carregando = true;
+    this.cdr.detectChanges();
 
     try {
       this.recursos = await this.supabaseService.obterRecursos();
@@ -44,6 +48,7 @@ export class ApoioComponent implements OnInit {
       this.recursos = [];
     } finally {
       this.carregando = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -58,8 +63,12 @@ export class ApoioComponent implements OnInit {
     const termo = this.pesquisa.trim().toLowerCase();
 
     return this.recursos.filter((recurso) => {
-      const matchDistrito = !distrito || recurso.distrito?.toLowerCase().includes(distrito);
-      const matchTipo = !tipo || recurso.tipo?.toLowerCase() === tipo;
+      const matchDistrito =
+        !distrito || recurso.distrito?.toLowerCase().includes(distrito);
+
+      const matchTipo =
+        !tipo || recurso.tipo?.toLowerCase() === tipo;
+
       const matchPesquisa =
         !termo ||
         recurso.nome?.toLowerCase().includes(termo) ||
@@ -103,5 +112,7 @@ export class ApoioComponent implements OnInit {
       distrito: '',
       descricao: ''
     };
+
+    this.cdr.detectChanges();
   }
 }
