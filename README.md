@@ -1,3 +1,9 @@
+[![CI](https://github.com/jessicabaptistello/Apoio_Vitima/actions/workflows/ci.yml/badge.svg)](https://github.com/jessicabaptistello/Apoio_Vitima/actions/workflows/ci.yml)
+
+![Angular](https://img.shields.io/badge/Angular-21.2.0-emerald?logo=angular&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-blueviolet?logo=supabase&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-brightgreen?logo=docker&logoColor=white)
+
 # Diretório de Apoio à Vítima
 
 Aplicação web que permite consultar e adicionar recursos de apoio a vítimas de crime ou violência doméstica, organizados por tipo e distrito.
