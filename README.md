@@ -92,7 +92,7 @@ Campos:
 
 ### GET todos os recursos
 
-![GET](./get-recursos.png)
+![GET](./get-recursos-todos.png)
 
 ### GET por ID
 
@@ -102,9 +102,9 @@ Campos:
 
 ![POST](./post-recursos.png)
 
-### PUT atualizar recurso
+### PATCH atualizar recurso
 
-![PUT](./put-recursos.png)
+![PATCH](./patch-recursos.png)
 
 ### DELETE recurso
 
