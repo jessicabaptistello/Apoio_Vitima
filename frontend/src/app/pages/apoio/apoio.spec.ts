@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideRouter } from '@angular/router';
 import { ApoioComponent } from './apoio';
 
 describe('Apoio', () => {
@@ -9,11 +9,12 @@ describe('Apoio', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ApoioComponent],
+      providers: [provideRouter([])]
     }).compileComponents();
 
     fixture = TestBed.createComponent(ApoioComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    fixture.detectChanges();
   });
 
   it('should create', () => {
