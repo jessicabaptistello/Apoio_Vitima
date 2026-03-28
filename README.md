@@ -36,8 +36,6 @@ npm install
 npm run dev
 ```
 
-Link do Render: https://apoio-vitima.onrender.com
-
 ### Frontend
 
 ```bash
@@ -181,6 +179,6 @@ ng teste
 
 ##  Estado do Projeto
 
-Backend funcional ✔️
+Backend funcional com deploy automatico no Render: https://apoio-vitima.onrender.com
 
-Frontend em desenvolvimento 
+Frontend com deploy automatico no Vercel: https://apoio-vitima-648gjnl0w-jessicabaptistellos-projects.vercel.app/
