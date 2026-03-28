@@ -43,24 +43,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   distritos: string[] = [
-    'Aveiro',
-    'Beja',
-    'Braga',
-    'Bragança',
-    'Castelo Branco',
-    'Coimbra',
-    'Évora',
-    'Faro',
-    'Guarda',
-    'Leiria',
-    'Lisboa',
-    'Portalegre',
-    'Porto',
-    'Santarém',
-    'Setúbal',
-    'Viana do Castelo',
-    'Vila Real',
-    'Viseu'
+    'Aveiro', 'Beja', 'Braga', 'Bragança', 'Castelo Branco', 'Coimbra',
+    'Évora', 'Faro', 'Guarda', 'Leiria', 'Lisboa', 'Portalegre',
+    'Porto', 'Santarém', 'Setúbal', 'Viana do Castelo', 'Vila Real', 'Viseu'
   ];
 
   statusOptions: string[] = [
@@ -77,13 +62,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico' }
   ];
 
-  alertasRapidos = [
-    'Estou em perigo!',
-    'Preciso de transporte.',
-    'Alguem me persegue.',
-    'Preciso de abrigo.'
-  ];
-
   constructor(
     private supabaseService: SupabaseService,
     private cdr: ChangeDetectorRef,
@@ -91,10 +69,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    await this.supabaseService.garantirSessaoPronta();
     await this.inicializarDashboard();
 
-    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async () => {
-      await this.inicializarDashboard();
+    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await this.inicializarDashboard();
+      } else {
+        this.nomeutilizador = 'Utilizador';
+        this.isAdmin = false;
+        this.pedidos = [];
+        this.recursosPendentes = [];
+        this.recursosAprovados = [];
+        this.recursoSelecionadoPorPedido = {};
+      }
+
       this.cdr.detectChanges();
     });
 
@@ -116,10 +105,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       await this.carregarRecursosAprovados();
     }
 
-    setTimeout(async () => {
-      await this.carregarUsuario();
-      this.cdr.detectChanges();
-    }, 300);
+    this.cdr.detectChanges();
   }
 
   async carregarUsuario() {
@@ -128,50 +114,54 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!user) {
       this.nomeutilizador = 'Utilizador';
       this.isAdmin = false;
-      this.cdr.detectChanges();
       return;
     }
 
     const metadata = user.user_metadata || {};
-    this.nomeutilizador = metadata['full_name'] || 'Utilizador';
+    this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
     this.isAdmin = (metadata['role'] ?? '') === 'admin';
-    this.cdr.detectChanges();
+
+    if (!this.novoPedido.email) {
+      this.novoPedido.email = user.email || '';
+    }
+  }
+
+  async carregarPedidos() {
+    const pedidos = await this.supabaseService.obterPedidos();
+
+    this.pedidos = (pedidos || []).map((pedido: any) => ({
+      ...pedido,
+      status: pedido.status || 'Pendente'
+    }));
+
+    this.recursoSelecionadoPorPedido = {};
+
+    this.pedidos.forEach((pedido: any) => {
+      this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
+    });
+  }
+
+  async carregarRecursosPendentes() {
+    this.recursosPendentes = await this.supabaseService.obterRecursosPendentes();
   }
 
   async carregarRecursosAprovados() {
-    const { data, error } = await this.supabaseService.supabase
-      .from('recursos')
-      .select('*')
-      .eq('status', 'aprovado')
-      .order('nome', { ascending: true });
-
-    if (error) {
-      console.error('Erro ao carregar recursos aprovados:', error.message);
-      this.recursosAprovados = [];
-    } else {
-      this.recursosAprovados = data || [];
-    }
-
-    this.cdr.detectChanges();
+    this.recursosAprovados = await this.supabaseService.obterRecursos();
   }
 
   setSection(section: string) {
     this.activeSection = section;
 
-    if (
-      section === 'meus-pedidos' ||
-      section === 'todos-pedidos' ||
-      section === 'status'
-    ) {
-      this.carregarPedidos();
+    if (section === 'meus-pedidos' || section === 'todos-pedidos' || section === 'status') {
+      this.carregarPedidos().then(() => this.cdr.detectChanges());
     }
 
     if (section === 'recursos-pendentes' && this.isAdmin) {
-      this.carregarRecursosPendentes();
+      this.carregarRecursosPendentes().then(() => this.cdr.detectChanges());
     }
 
     if ((section === 'todos-pedidos' || section === 'status') && this.isAdmin) {
-      this.carregarRecursosAprovados();
+      this.carregarRecursosAprovados().then(() => this.cdr.detectChanges());
     }
   }
 
@@ -183,107 +173,69 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const user = await this.supabaseService.getUser();
+    await this.supabaseService.garantirSessaoPronta();
 
-    if (!user) {
-      alert('Utilizador não autenticado.');
-      return;
-    }
-
-    const { error } = await this.supabaseService.supabase
-      .from('pedidos')
-      .insert([
-        {
-          user_id: user.id,
-          email,
-          tipo_pedido,
-          contacto,
-          distrito,
-          descricao,
-          status: 'Pendente'
-        }
-      ]);
+    const { data, error } = await this.supabaseService.criarPedido({
+      email,
+      tipo_pedido,
+      contacto,
+      distrito,
+      descricao
+    });
 
     if (error) {
-      console.error('Erro ao enviar pedido:', error);
       alert('Erro ao enviar pedido: ' + error.message);
-    } else {
-      alert('Pedido enviado com sucesso!');
-      this.novoPedido = {
-        email: '',
-        tipo_pedido: '',
-        contacto: '',
-        distrito: '',
-        descricao: ''
-      };
-      await this.carregarPedidos();
-      this.activeSection = 'meus-pedidos';
-    }
-  }
-
-  async carregarPedidos() {
-    const user = await this.supabaseService.getUser();
-
-    if (!user) {
-      this.pedidos = [];
-      this.cdr.detectChanges();
       return;
     }
 
-    let query = this.supabaseService.supabase
-      .from('pedidos')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const pedidoCriado = Array.isArray(data) ? data[0] : null;
 
-    if (!this.isAdmin) {
-      query = query.eq('user_id', user.id);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Erro ao carregar pedidos:', error.message);
-      this.pedidos = [];
+    if (pedidoCriado) {
+      this.pedidos = [
+        { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
+        ...this.pedidos
+      ];
+      this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
     } else {
-      this.pedidos = data || [];
-
-      this.pedidos.forEach((pedido) => {
-        this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
-      });
+      await this.carregarPedidos();
     }
 
-    this.cdr.detectChanges();
-    console.log('Pedidos carregados no dashboard:', this.pedidos);
-  }
+    alert('Pedido enviado com sucesso!');
 
-  async carregarRecursosPendentes() {
-    this.recursosPendentes = await this.supabaseService.obterRecursosPendentes();
+    this.novoPedido = {
+      email,
+      tipo_pedido: '',
+      contacto: '',
+      distrito: '',
+      descricao: ''
+    };
+
+    this.activeSection = 'meus-pedidos';
     this.cdr.detectChanges();
-    console.log('Recursos pendentes carregados:', this.recursosPendentes);
   }
 
   verDetalhePedido(pedido: any) {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
-  logout(event: Event) {
+  async logout(event: Event) {
+    event.preventDefault();
+
     const confirmar = confirm('Tem a certeza que deseja sair?');
+    if (!confirmar) return;
 
-    if (!confirmar) {
-      event.preventDefault();
-      return;
-    }
-
-    this.supabaseService.signOut();
+    await this.supabaseService.signOut();
 
     this.nomeutilizador = 'Utilizador';
     this.isAdmin = false;
     this.pedidos = [];
     this.recursosPendentes = [];
     this.recursosAprovados = [];
-    this.cdr.detectChanges();
+    this.recursoSelecionadoPorPedido = {};
 
+    this.cdr.detectChanges();
     alert('Sessão encerrada!');
+    window.location.href = 'https://www.google.pt';
   }
 
   async apagarPedido(pedido: any) {
@@ -292,17 +244,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const confirmar = confirm('Tem a certeza que deseja apagar este pedido?');
     if (!confirmar) return;
 
-    const { error } = await this.supabaseService.supabase
-      .from('pedidos')
-      .delete()
-      .eq('id', pedido.id);
+    const { error } = await this.supabaseService.apagarPedido(pedido.id);
 
     if (error) {
       alert('Erro ao apagar pedido: ' + error.message);
-    } else {
-      alert('Pedido apagado com sucesso!');
-      await this.carregarPedidos();
+      return;
     }
+
+    this.pedidos = this.pedidos.filter((p) => p.id !== pedido.id);
+    delete this.recursoSelecionadoPorPedido[pedido.id];
+
+    this.cdr.detectChanges();
+    alert('Pedido apagado com sucesso!');
   }
 
   async atualizarStatusPedido(pedido: any, novoStatus: string) {
@@ -310,17 +263,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (!novoStatus) return;
     if (pedido.status === 'Concluído') return;
 
-    const { error } = await this.supabaseService.supabase
-      .from('pedidos')
-      .update({ status: novoStatus })
-      .eq('id', pedido.id);
+    const { error } = await this.supabaseService.atualizarStatusPedido(pedido.id, novoStatus);
 
     if (error) {
       alert('Erro ao atualizar status: ' + error.message);
-    } else {
-      alert('Status atualizado com sucesso!');
-      await this.carregarPedidos();
+      return;
     }
+
+    pedido.status = novoStatus;
+    this.cdr.detectChanges();
+    alert('Status atualizado com sucesso!');
   }
 
   async encaminharPedido(pedido: any) {
@@ -333,7 +285,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const recurso = this.recursosAprovados.find((r) => r.id === Number(recursoId));
+    const recurso = this.recursosAprovados.find((r: any) => r.id === Number(recursoId));
 
     if (!recurso) {
       alert('Recurso não encontrado.');
@@ -342,25 +294,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     const mensagem = `O seu pedido foi encaminhado para ${recurso.nome}. Contacto: ${recurso.contacto}. Website: ${recurso.website || 'Não disponível'}.`;
 
-    const { error } = await this.supabaseService.supabase
-      .from('pedidos')
-      .update({
-        status: 'Encaminhado',
-        recurso_id: recurso.id,
-        recurso_nome: recurso.nome,
-        recurso_contacto: recurso.contacto,
-        recurso_website: recurso.website || null,
-        mensagem_encaminhamento: mensagem
-      })
-      .eq('id', pedido.id);
+    const { error } = await this.supabaseService.encaminharPedido(pedido.id, {
+      recurso_id: recurso.id,
+      recurso_nome: recurso.nome,
+      recurso_contacto: recurso.contacto,
+      recurso_website: recurso.website || null,
+      mensagem_encaminhamento: mensagem
+    });
 
     if (error) {
       alert('Erro ao encaminhar pedido: ' + error.message);
       return;
     }
 
+    pedido.status = 'Encaminhado';
+    pedido.recurso_id = recurso.id;
+    pedido.recurso_nome = recurso.nome;
+    pedido.recurso_contacto = recurso.contacto;
+    pedido.recurso_website = recurso.website || null;
+    pedido.mensagem_encaminhamento = mensagem;
+
+    this.cdr.detectChanges();
     alert('Pedido encaminhado com sucesso!');
-    await this.carregarPedidos();
   }
 
   obterLinkEmailSimulado(pedido: any): string {
@@ -373,6 +328,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return `mailto:${pedido.email}?subject=${assunto}&body=${corpo}`;
   }
 
+  verMensagemEmail(pedido: any) {
+    const mensagem =
+      pedido.mensagem_encaminhamento ||
+      `O seu pedido foi encaminhado para ${pedido.recurso_nome || 'um recurso de apoio'}.`;
+
+    alert(
+      `ASSUNTO: Encaminhamento de pedido de apoio\n\n${mensagem}\n\nEste email é apenas preparado, não é enviado automaticamente.`
+    );
+  }
+
   isStatusBloqueado(pedido: any): boolean {
     return pedido.status === 'Concluído';
   }
@@ -383,16 +348,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const confirmar = confirm(`Deseja aprovar o recurso "${recurso.nome}"?`);
     if (!confirmar) return;
 
-    const { error } = await this.supabaseService.aprovarRecurso(recurso.id);
+    const { data, error } = await this.supabaseService.aprovarRecurso(recurso.id);
 
     if (error) {
       alert('Erro ao aprovar recurso: ' + error.message);
       return;
     }
 
+    this.recursosPendentes = this.recursosPendentes.filter((r) => r.id !== recurso.id);
+
+    const recursoAprovado = Array.isArray(data) ? data[0] : null;
+    if (recursoAprovado) {
+      const jaExiste = this.recursosAprovados.some((r) => r.id === recursoAprovado.id);
+      if (!jaExiste) {
+        this.recursosAprovados = [...this.recursosAprovados, recursoAprovado].sort((a, b) =>
+          String(a.nome).localeCompare(String(b.nome))
+        );
+      }
+    } else {
+      await this.carregarRecursosAprovados();
+    }
+
+    this.cdr.detectChanges();
     alert('Recurso aprovado com sucesso!');
-    await this.carregarRecursosPendentes();
-    await this.carregarRecursosAprovados();
   }
 
   async rejeitarRecurso(recurso: any) {
@@ -408,8 +386,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.recursosPendentes = this.recursosPendentes.filter((r) => r.id !== recurso.id);
+    this.recursosAprovados = this.recursosAprovados.filter((r) => r.id !== recurso.id);
+
+    this.cdr.detectChanges();
     alert('Recurso rejeitado com sucesso!');
-    await this.carregarRecursosPendentes();
   }
 
   getStatusClass(status: string): string {
