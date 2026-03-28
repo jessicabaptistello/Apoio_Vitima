@@ -172,11 +172,9 @@ Foram executados testes unitários no frontend Angular com sucesso.
 ```bash
 ng test
 
-### TESTES
-
 ![TESTES](./testes.png)
 
-### GET por ID
+---
 
 ##  Estado do Projeto
 
