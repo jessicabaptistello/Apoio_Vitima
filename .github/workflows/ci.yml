@@ -109,14 +109,8 @@ jobs:
         working-directory: frontend
         run: vercel pull --yes --environment=production --token=$VERCEL_TOKEN
 
-      - name: Check .vercel folder
-        working-directory: frontend
-        run: ls -la && ls -la .vercel || true
-
-      - name: Build project
-        working-directory: frontend
-        run: vercel build --prod --yes --token=$VERCEL_TOKEN
-
       - name: Deploy to Vercel
         working-directory: frontend
-        run: vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+        run: vercel deploy --prod --token=$VERCEL_TOKEN
+
+        
