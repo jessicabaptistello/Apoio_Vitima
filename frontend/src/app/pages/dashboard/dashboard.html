@@ -1,5 +1,4 @@
 <div class="dashboard-layout">
-
   <a
     href="https://www.google.pt"
     (click)="logout($event)"
@@ -41,9 +40,7 @@
     </header>
 
     <!-- INÍCIO -->
-    <div *ngIf="activeSection === 'info'" class="centered-content">
-
-      <!-- FORMULÁRIO -->
+    <section *ngIf="activeSection === 'info'" class="centered-content">
       <div class="form-container">
         <span class="eyebrow">NOVO PEDIDO</span>
         <h2>Pedido de Ajuda</h2>
@@ -58,7 +55,9 @@
             <label>Tipo de Pedido</label>
             <select [(ngModel)]="novoPedido.tipo_pedido">
               <option value="">Selecione</option>
-              <option *ngFor="let tipo of tiposPedido">{{ tipo }}</option>
+              <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                {{ tipo }}
+              </option>
             </select>
           </div>
 
@@ -71,7 +70,9 @@
             <label>Distrito</label>
             <select [(ngModel)]="novoPedido.distrito">
               <option value="">Selecione</option>
-              <option *ngFor="let distrito of distritos">{{ distrito }}</option>
+              <option *ngFor="let distrito of distritos" [value]="distrito">
+                {{ distrito }}
+              </option>
             </select>
           </div>
         </div>
@@ -81,12 +82,11 @@
           <textarea [(ngModel)]="novoPedido.descricao"></textarea>
         </div>
 
-        <button class="btn-send" (click)="enviarPedido()">
+        <button type="button" class="btn-send" (click)="enviarPedido()">
           Enviar Pedido
         </button>
       </div>
 
-      <!-- CONTACTOS -->
       <h2 class="section-title">Linhas de Apoio Imediato</h2>
 
       <div class="cards-grid">
@@ -96,140 +96,265 @@
           <p>{{ c.numero }}</p>
         </div>
       </div>
-
-      <!-- BOTÕES DE SOCORRO -->
-      <div class="panic-zone">
-        <h3>Pedidos Rápidos de Ajuda</h3>
-        <div class="panic-buttons">
-          <button
-            *ngFor="let alerta of alertasRapidos"
-            class="btn-panic"
-          >
-            {{ alerta }}
-          </button>
-        </div>
-      </div>
-    </div>
+    </section>
 
     <!-- MEUS PEDIDOS -->
-    <div *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
+    <section *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
       <h2 class="section-title">Os Meus Pedidos</h2>
 
-      <div class="list-container">
-        <div *ngFor="let pedido of pedidos" class="pedido-card">
-          <div class="pedido-info">
-            <span class="titulo">{{ pedido.tipo_pedido }}</span>
+      <div *ngIf="pedidos.length === 0" class="empty-state">
+        Ainda não existem pedidos registados.
+      </div>
 
-            <div class="pedido-details">
-              <p><strong>Email:</strong> {{ pedido.email }}</p>
-              <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
-              <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+      <div class="list-container" *ngIf="pedidos.length > 0">
+        <article *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-body">
+            <div class="pedido-info">
+              <span class="titulo">{{ pedido.tipo_pedido }}</span>
+
+              <div class="pedido-details">
+                <p><strong>Email:</strong> {{ pedido.email }}</p>
+                <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
+                <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+              </div>
+
+              <p class="descricao">{{ pedido.descricao }}</p>
+
+              <div *ngIf="pedido.recurso_nome" class="pedido-details recurso-box">
+                <p><strong>Encaminhado para:</strong> {{ pedido.recurso_nome }}</p>
+                <p><strong>Contacto do recurso:</strong> {{ pedido.recurso_contacto }}</p>
+
+                <p *ngIf="pedido.recurso_website">
+                  <strong>Website:</strong>
+                  <a [href]="pedido.recurso_website" target="_blank">
+                    {{ pedido.recurso_website }}
+                  </a>
+                </p>
+
+                <p *ngIf="pedido.mensagem_encaminhamento">
+                  <strong>Mensagem:</strong> {{ pedido.mensagem_encaminhamento }}
+                </p>
+
+                <div *ngIf="pedido.mensagem_encaminhamento" class="pedido-actions inline-actions">
+                  <a [href]="obterLinkEmailSimulado(pedido)" class="btn-outline">
+                    Preparar email
+                  </a>
+
+                  <button type="button" class="editar" (click)="verMensagemEmail(pedido)">
+                    Ver mensagem
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <p class="descricao">{{ pedido.descricao }}</p>
+            <div class="pedido-meta">
+              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+                {{ pedido.status }}
+              </span>
+            </div>
           </div>
-
-          <div class="pedido-meta">
-            <span class="status" [ngClass]="getStatusClass(pedido.status)">
-              {{ pedido.status }}
-            </span>
-          </div>
-        </div>
+        </article>
       </div>
-    </div>
+    </section>
 
-    <!-- TODOS OS PEDIDOS (ADM) -->
-    <div *ngIf="activeSection === 'todos-pedidos' && isAdmin" class="centered-content">
+    <!-- TODOS OS PEDIDOS -->
+    <section *ngIf="activeSection === 'todos-pedidos' && isAdmin" class="centered-content">
       <h2 class="section-title">Painel de Gestão</h2>
 
-      <div class="list-container">
-        <div *ngFor="let pedido of pedidos" class="pedido-card">
-          <div class="pedido-info">
-            <span class="titulo">{{ pedido.tipo_pedido }}</span>
-
-            <div class="pedido-details">
-              <p><strong>Email:</strong> {{ pedido.email }}</p>
-              <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
-              <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
-            </div>
-
-            <p class="descricao">{{ pedido.descricao }}</p>
-          </div>
-
-          <div class="pedido-meta">
-            <span class="status" [ngClass]="getStatusClass(pedido.status)">
-              {{ pedido.status }}
-            </span>
-
-            <!-- ADMIN -->
-            <div class="status-change-box">
-              <label>Alterar Status</label>
-              <select
-                [ngModel]="pedido.status"
-                (ngModelChange)="atualizarStatusPedido(pedido, $event)"
-              >
-                <option *ngFor="let status of statusOptions">{{ status }}</option>
-              </select>
-            </div>
-
-            <div class="pedido-actions">
-              <button class="apagar" (click)="apagarPedido(pedido)">
-                Apagar
-              </button>
-            </div>
-          </div>
-        </div>
+      <div *ngIf="pedidos.length === 0" class="empty-state">
+        Ainda não existem pedidos registados.
       </div>
-    </div>
+
+      <div class="list-container" *ngIf="pedidos.length > 0">
+        <article *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-body">
+            <div class="pedido-info">
+              <span class="titulo">{{ pedido.tipo_pedido }}</span>
+
+              <div class="pedido-details">
+                <p><strong>Email:</strong> {{ pedido.email }}</p>
+                <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
+                <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+              </div>
+
+              <p class="descricao">{{ pedido.descricao }}</p>
+
+              <div *ngIf="pedido.recurso_nome" class="pedido-details recurso-box">
+                <p><strong>Recurso associado:</strong> {{ pedido.recurso_nome }}</p>
+                <p><strong>Contacto do recurso:</strong> {{ pedido.recurso_contacto }}</p>
+
+                <p *ngIf="pedido.recurso_website">
+                  <strong>Website:</strong>
+                  <a [href]="pedido.recurso_website" target="_blank">
+                    {{ pedido.recurso_website }}
+                  </a>
+                </p>
+
+                <p *ngIf="pedido.mensagem_encaminhamento">
+                  <strong>Mensagem:</strong> {{ pedido.mensagem_encaminhamento }}
+                </p>
+              </div>
+            </div>
+
+            <div class="pedido-meta admin-meta">
+              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+                {{ pedido.status }}
+              </span>
+
+              <div class="status-change-box">
+                <label>Alterar Status</label>
+                <select
+                  [ngModel]="pedido.status"
+                  (ngModelChange)="atualizarStatusPedido(pedido, $event)"
+                  [disabled]="isStatusBloqueado(pedido)"
+                >
+                  <option *ngFor="let status of statusOptions" [value]="status">
+                    {{ status }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="status-change-box">
+                <label>Encaminhar para recurso</label>
+                <select [(ngModel)]="recursoSelecionadoPorPedido[pedido.id]">
+                  <option [ngValue]="null">Selecione um recurso</option>
+                  <option *ngFor="let recurso of recursosAprovados" [ngValue]="recurso.id">
+                    {{ recurso.nome }} - {{ recurso.distrito }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="pedido-actions">
+                <button type="button" class="editar" (click)="encaminharPedido(pedido)">
+                  Encaminhar
+                </button>
+
+                <button type="button" class="apagar" (click)="apagarPedido(pedido)">
+                  Apagar
+                </button>
+              </div>
+
+              <div *ngIf="pedido.mensagem_encaminhamento" class="pedido-actions inline-actions">
+                <a [href]="obterLinkEmailSimulado(pedido)" class="btn-outline">
+                  Preparar email
+                </a>
+
+                <button type="button" class="editar" (click)="verMensagemEmail(pedido)">
+                  Ver mensagem
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <!-- RECURSOS PENDENTES -->
-    <div *ngIf="activeSection === 'recursos-pendentes'" class="centered-content">
+    <section *ngIf="activeSection === 'recursos-pendentes'" class="centered-content">
       <h2 class="section-title">Recursos Pendentes</h2>
 
-      <div class="list-container">
-        <div *ngFor="let recurso of recursosPendentes" class="pedido-card">
-          <div class="pedido-info">
-            <span class="titulo">{{ recurso.nome }}</span>
-            <p>{{ recurso.tipo }} • {{ recurso.distrito }}</p>
-            <p>{{ recurso.descricao }}</p>
-          </div>
-
-          <div class="pedido-actions">
-            <button class="editar" (click)="aprovarRecurso(recurso)">Aprovar</button>
-            <button class="apagar" (click)="rejeitarRecurso(recurso)">Rejeitar</button>
-          </div>
-        </div>
+      <div *ngIf="recursosPendentes.length === 0" class="empty-state">
+        Não existem recursos pendentes no momento.
       </div>
-    </div>
 
-    <!-- STATUS -->
-    <div *ngIf="activeSection === 'status'" class="centered-content">
-      <h2 class="section-title">Status dos Pedidos</h2>
+      <div class="list-container" *ngIf="recursosPendentes.length > 0">
+        <article *ngFor="let recurso of recursosPendentes" class="pedido-card">
+          <div class="pedido-body">
+            <div class="pedido-info">
+              <span class="titulo">{{ recurso.nome }}</span>
+              <div class="pedido-details">
+                <p><strong>Tipo:</strong> {{ recurso.tipo }}</p>
+                <p><strong>Distrito:</strong> {{ recurso.distrito }}</p>
+                <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
 
-      <div class="list-container">
-        <div *ngFor="let pedido of pedidos" class="pedido-card">
-          <div class="pedido-info">
-            <span class="titulo">{{ pedido.tipo_pedido }}</span>
-            <p>{{ pedido.descricao }}</p>
-          </div>
+                <p *ngIf="recurso.website">
+                  <strong>Website:</strong>
+                  <a [href]="recurso.website" target="_blank">
+                    {{ recurso.website }}
+                  </a>
+                </p>
+              </div>
 
-          <div class="pedido-meta">
-            <span class="status" [ngClass]="getStatusClass(pedido.status)">
-              {{ pedido.status }}
-            </span>
+              <p class="descricao">{{ recurso.descricao }}</p>
+            </div>
 
-            <div *ngIf="isAdmin" class="status-change-box">
-              <select
-                [ngModel]="pedido.status"
-                (ngModelChange)="atualizarStatusPedido(pedido, $event)"
-              >
-                <option *ngFor="let status of statusOptions">{{ status }}</option>
-              </select>
+            <div class="pedido-meta admin-meta compact-actions">
+              <div class="pedido-actions vertical-actions">
+                <button type="button" class="editar" (click)="aprovarRecurso(recurso)">
+                  Aprovar
+                </button>
+                <button type="button" class="apagar" (click)="rejeitarRecurso(recurso)">
+                  Rejeitar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </article>
       </div>
-    </div>
+    </section>
 
+    <!-- STATUS -->
+    <section *ngIf="activeSection === 'status'" class="centered-content">
+      <h2 class="section-title">Status dos Pedidos</h2>
+
+      <div *ngIf="pedidos.length === 0" class="empty-state">
+        Ainda não existem pedidos para mostrar.
+      </div>
+
+      <div class="list-container" *ngIf="pedidos.length > 0">
+        <article *ngFor="let pedido of pedidos" class="pedido-card">
+          <div class="pedido-body">
+            <div class="pedido-info">
+              <span class="titulo">{{ pedido.tipo_pedido }}</span>
+              <p class="descricao">{{ pedido.descricao }}</p>
+
+              <div *ngIf="pedido.recurso_nome" class="pedido-details recurso-box">
+                <p><strong>Recurso associado:</strong> {{ pedido.recurso_nome }}</p>
+                <p><strong>Contacto do recurso:</strong> {{ pedido.recurso_contacto }}</p>
+
+                <p *ngIf="pedido.recurso_website">
+                  <strong>Website:</strong>
+                  <a [href]="pedido.recurso_website" target="_blank">
+                    {{ pedido.recurso_website }}
+                  </a>
+                </p>
+
+                <p *ngIf="pedido.mensagem_encaminhamento">
+                  <strong>Mensagem:</strong> {{ pedido.mensagem_encaminhamento }}
+                </p>
+              </div>
+            </div>
+
+            <div class="pedido-meta">
+              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+                {{ pedido.status }}
+              </span>
+
+              <div *ngIf="isAdmin" class="status-change-box">
+                <select
+                  [ngModel]="pedido.status"
+                  (ngModelChange)="atualizarStatusPedido(pedido, $event)"
+                  [disabled]="isStatusBloqueado(pedido)"
+                >
+                  <option *ngFor="let status of statusOptions" [value]="status">
+                    {{ status }}
+                  </option>
+                </select>
+              </div>
+
+              <div *ngIf="pedido.mensagem_encaminhamento" class="pedido-actions inline-actions">
+                <a [href]="obterLinkEmailSimulado(pedido)" class="btn-outline">
+                  Preparar email
+                </a>
+
+                <button type="button" class="editar" (click)="verMensagemEmail(pedido)">
+                  Ver mensagem
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
   </main>
 </div>
