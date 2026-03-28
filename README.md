@@ -123,7 +123,7 @@ Campos:
 ---
 ## Testes com Postman para a tabela Pedidos
 
-### GET todos os recursos
+### GET todos os pedidos
 
 ![GET](./get.png)
 
@@ -131,15 +131,15 @@ Campos:
 
 ![GET APÓS DELETE](./getaposdelete.png)
 
-### POST criar recurso
+### POST criar pedido
 
 ![POST](./post.png)
 
-### PATCH atualizar recurso
+### PATCH atualizar pedido
 
 ![PATCH](./patch.png)
 
-### DELETE recurso
+### DELETE pedido
 
 ![DELETE](./delete.png)
 
