@@ -154,6 +154,30 @@ Campos:
 
 ---
 
+##  Testes Unitários
+
+Foram executados testes unitários no frontend Angular com sucesso.
+
+### Testes realizados
+- Criação do componente principal da aplicação
+- Criação do componente Home
+- Criação do componente Login
+- Criação do componente Dashboard
+- Criação do componente Apoio
+- Criação do componente de detalhe de recurso
+- Criação do serviço Supabase
+- Teste do pipe de saudação
+
+### Comando utilizado
+```bash
+ng test
+
+### TESTES
+
+![TESTES](./testes.png)
+
+### GET por ID
+
 ##  Estado do Projeto
 
 Backend funcional ✔️
