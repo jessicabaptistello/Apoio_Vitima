@@ -19,8 +19,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   pedidos: any[] = [];
   recursosPendentes: any[] = [];
+  recursosAprovados: any[] = [];
 
   private authSubscription: any;
+
+  recursoSelecionadoPorPedido: { [key: number]: number | null } = {};
 
   novoPedido = {
     email: '',
@@ -110,6 +113,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (this.isAdmin) {
       await this.carregarRecursosPendentes();
+      await this.carregarRecursosAprovados();
     }
 
     setTimeout(async () => {
@@ -134,6 +138,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
+  async carregarRecursosAprovados() {
+    const { data, error } = await this.supabaseService.supabase
+      .from('recursos')
+      .select('*')
+      .eq('status', 'aprovado')
+      .order('nome', { ascending: true });
+
+    if (error) {
+      console.error('Erro ao carregar recursos aprovados:', error.message);
+      this.recursosAprovados = [];
+    } else {
+      this.recursosAprovados = data || [];
+    }
+
+    this.cdr.detectChanges();
+  }
+
   setSection(section: string) {
     this.activeSection = section;
 
@@ -147,6 +168,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     if (section === 'recursos-pendentes' && this.isAdmin) {
       this.carregarRecursosPendentes();
+    }
+
+    if ((section === 'todos-pedidos' || section === 'status') && this.isAdmin) {
+      this.carregarRecursosAprovados();
     }
   }
 
@@ -221,6 +246,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.pedidos = [];
     } else {
       this.pedidos = data || [];
+
+      this.pedidos.forEach((pedido) => {
+        this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
+      });
     }
 
     this.cdr.detectChanges();
@@ -251,6 +280,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isAdmin = false;
     this.pedidos = [];
     this.recursosPendentes = [];
+    this.recursosAprovados = [];
     this.cdr.detectChanges();
 
     alert('Sessão encerrada!');
@@ -278,6 +308,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async atualizarStatusPedido(pedido: any, novoStatus: string) {
     if (!this.isAdmin) return;
     if (!novoStatus) return;
+    if (pedido.status === 'Concluído') return;
 
     const { error } = await this.supabaseService.supabase
       .from('pedidos')
@@ -290,6 +321,60 @@ export class DashboardComponent implements OnInit, OnDestroy {
       alert('Status atualizado com sucesso!');
       await this.carregarPedidos();
     }
+  }
+
+  async encaminharPedido(pedido: any) {
+    if (!this.isAdmin) return;
+
+    const recursoId = this.recursoSelecionadoPorPedido[pedido.id];
+
+    if (!recursoId) {
+      alert('Selecione um recurso antes de encaminhar.');
+      return;
+    }
+
+    const recurso = this.recursosAprovados.find((r) => r.id === Number(recursoId));
+
+    if (!recurso) {
+      alert('Recurso não encontrado.');
+      return;
+    }
+
+    const mensagem = `O seu pedido foi encaminhado para ${recurso.nome}. Contacto: ${recurso.contacto}. Website: ${recurso.website || 'Não disponível'}.`;
+
+    const { error } = await this.supabaseService.supabase
+      .from('pedidos')
+      .update({
+        status: 'Encaminhado',
+        recurso_id: recurso.id,
+        recurso_nome: recurso.nome,
+        recurso_contacto: recurso.contacto,
+        recurso_website: recurso.website || null,
+        mensagem_encaminhamento: mensagem
+      })
+      .eq('id', pedido.id);
+
+    if (error) {
+      alert('Erro ao encaminhar pedido: ' + error.message);
+      return;
+    }
+
+    alert('Pedido encaminhado com sucesso!');
+    await this.carregarPedidos();
+  }
+
+  obterLinkEmailSimulado(pedido: any): string {
+    const assunto = encodeURIComponent('Encaminhamento de pedido de apoio');
+    const corpo = encodeURIComponent(
+      pedido.mensagem_encaminhamento ||
+      `O seu pedido foi encaminhado para ${pedido.recurso_nome || 'um recurso de apoio'}.`
+    );
+
+    return `mailto:${pedido.email}?subject=${assunto}&body=${corpo}`;
+  }
+
+  isStatusBloqueado(pedido: any): boolean {
+    return pedido.status === 'Concluído';
   }
 
   async aprovarRecurso(recurso: any) {
@@ -307,6 +392,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     alert('Recurso aprovado com sucesso!');
     await this.carregarRecursosPendentes();
+    await this.carregarRecursosAprovados();
   }
 
   async rejeitarRecurso(recurso: any) {
