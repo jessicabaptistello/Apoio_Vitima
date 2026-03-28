@@ -16,7 +16,7 @@ const supabase = createClient(
 const NOVA_TABELA = 'recursos';
 
 app.get('/', (req, res) => {
-  res.send('API de Apoio à Vítima: Online! ⚖️');
+  res.send('API de Apoio à Vítima: Online!');
 });
 
 

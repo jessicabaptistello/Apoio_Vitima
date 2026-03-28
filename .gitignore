@@ -49,3 +49,4 @@ environemnts/
 backend/.env
 .env
 .vercel
+.env*.local
