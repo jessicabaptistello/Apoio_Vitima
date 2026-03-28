@@ -48,3 +48,4 @@ environemnts/
 
 backend/.env
 .env
+.vercel
