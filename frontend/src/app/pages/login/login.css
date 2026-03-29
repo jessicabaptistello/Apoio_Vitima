@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #f6f3ef;
+  background: #eee3e7; /* Rosa muito claro */
   padding: 20px;
   box-sizing: border-box;
 }
@@ -11,11 +11,11 @@
 .login-box {
   width: 100%;
   max-width: 460px;
-  background: #fffdfa;
+  background: #ffffff; /* Branco puro */
   padding: 38px;
   border-radius: 24px;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e7ddd5;
+  box-shadow: 0 10px 22px rgba(246, 171, 182, 0.15);
+  border: 1px solid #ead5dc;
 }
 
 .login-header {
@@ -25,7 +25,7 @@
 
 .eyebrow {
   display: inline-block;
-  color: #c78557;
+  color: #f6abb6; /* Texto rosa forte */
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 1px;
@@ -42,7 +42,7 @@
 
 .subtitle {
   margin: 0;
-  color: #726866;
+  color: #3d3131;
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -82,7 +82,7 @@
 .input-group input {
   width: 100%;
   padding: 13px 14px;
-  border: 1px solid #d8cfc7;
+  border: 1px solid #ead5dc;
   border-radius: 14px;
   box-sizing: border-box;
   background: #ffffff;
@@ -93,12 +93,20 @@
 }
 
 .input-group input:focus {
-  border-color: #7ea08b;
-  box-shadow: 0 0 0 3px rgba(126, 160, 139, 0.14);
+  border-color: #f6abb6;
+  box-shadow: 0 0 0 3px rgba(246, 171, 182, 0.2);
 }
 
 .input-group input::placeholder {
   color: #9a908a;
+}
+
+.validation-error {
+  display: block;
+  margin-top: 6px;
+  color: #ff0000; /* Validação em vermelho puro */
+  font-size: 12px;
+  font-weight: 700; /* Com destaque */
 }
 
 .button-stack {
@@ -109,8 +117,8 @@
 }
 
 .btn-login {
-  background: #7ea08b;
-  color: white;
+  background: #f6abb6;
+  color: #ffffff; /* Texto branco */
   padding: 14px;
   border: none;
   border-radius: 16px;
@@ -121,14 +129,14 @@
 }
 
 .btn-login:hover {
-  background: #6f9180;
+  background: #f4b6c2;
 }
 
 .btn-register {
   background: transparent;
-  color: #7ea08b;
+  color: #f6abb6;
   padding: 13px;
-  border: 1px solid #bfcfc5;
+  border: 1px solid #f4b6c2;
   border-radius: 16px;
   cursor: pointer;
   font-weight: 700;
@@ -137,7 +145,8 @@
 }
 
 .btn-register:hover {
-  background: #f4f7f4;
+  background: #ffffff;
+  border-color: #f6abb6;
 }
 
 .btn-login:disabled,

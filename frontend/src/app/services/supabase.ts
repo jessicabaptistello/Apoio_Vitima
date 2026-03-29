@@ -7,354 +7,564 @@ import { environment } from '../../environments/environment.development';
 })
 export class SupabaseService {
   public supabase: SupabaseClient;
-  private currentUser: User | null = null;
-
-  private sessionInitialized = false;
-  private sessionInitPromise: Promise<void>;
 
   constructor() {
     this.supabase = createClient(
       environment.supabaseUrl,
-      environment.supabaseKey,
-      {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true
-        }
-      }
+      environment.supabaseKey
     );
-
-    this.sessionInitPromise = this.inicializarSessao();
-
-    this.supabase.auth.onAuthStateChange((_event, session) => {
-      this.currentUser = session?.user ?? null;
-      this.sessionInitialized = true;
-    });
   }
 
-  private async inicializarSessao(): Promise<void> {
-    try {
-      const { data, error } = await this.supabase.auth.getSession();
+  private async executarComTimeout<T = any>(
+    operacao: PromiseLike<T>,
+    timeoutMs: number = 8000
+  ): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error('Tempo limite excedido ao comunicar com o Supabase.'));
+      }, timeoutMs);
+    });
 
-      if (error) {
-        console.error('Erro ao restaurar sessão:', error.message);
-        this.currentUser = null;
-      } else {
-        this.currentUser = data.session?.user ?? null;
-      }
-    } catch (error) {
-      console.error('Erro inesperado ao inicializar sessão:', error);
-      this.currentUser = null;
-    } finally {
-      this.sessionInitialized = true;
-    }
+    return await Promise.race([
+      Promise.resolve(operacao as any),
+      timeoutPromise
+    ]);
+  }
+
+  private mensagemErro(error: any, fallback: string) {
+    if (!error) return { message: fallback };
+    if (typeof error === 'string') return { message: error };
+    if (error.message) return { message: error.message };
+    return { message: fallback };
+  }
+
+  private normalizarBoolean(valor: any): boolean | null {
+    if (valor === true || valor === 'true' || valor === 1 || valor === '1') return true;
+    if (valor === false || valor === 'false' || valor === 0 || valor === '0') return false;
+    return null;
+  }
+
+  private recursoEstaAprovado(recurso: any): boolean {
+    const aprovado = this.normalizarBoolean(recurso?.aprovado);
+    if (aprovado === true) return true;
+    if (aprovado === false) return false;
+
+    const status = String(recurso?.status ?? recurso?.estado ?? '').trim().toLowerCase();
+
+    if (status.includes('aprov')) return true;
+    if (status.includes('pend')) return false;
+    if (status.includes('rejeit')) return false;
+
+    return true;
+  }
+
+  private recursoEstaPendente(recurso: any): boolean {
+    const aprovado = this.normalizarBoolean(recurso?.aprovado);
+    if (aprovado === false) return true;
+    if (aprovado === true) return false;
+
+    const status = String(recurso?.status ?? recurso?.estado ?? '').trim().toLowerCase();
+
+    if (status.includes('pend')) return true;
+    if (status.includes('aprov')) return false;
+    if (status.includes('rejeit')) return false;
+
+    return false;
   }
 
   async garantirSessaoPronta(): Promise<void> {
-    if (!this.sessionInitialized) {
-      await this.sessionInitPromise;
+    try {
+      await this.executarComTimeout(this.supabase.auth.getSession(), 8000);
+    } catch (error) {
+      console.error('Erro ao garantir sessão pronta:', error);
+    }
+  }
+
+  async getSession() {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase.auth.getSession(),
+        8000
+      );
+
+      return response?.data?.session ?? null;
+    } catch (error) {
+      console.error('Erro ao obter sessão:', error);
+      return null;
+    }
+  }
+
+  async getUser(): Promise<User | null> {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase.auth.getUser(),
+        8000
+      );
+
+      return response?.data?.user ?? null;
+    } catch (error) {
+      console.error('Erro ao obter utilizador:', error);
+      return null;
+    }
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    return await this.getUser();
+  }
+
+  onAuthStateChange(callback: (event: string, session: any) => void) {
+    return this.supabase.auth.onAuthStateChange((event, session) => {
+      callback(event, session);
+    });
+  }
+
+  async getUserProfile() {
+    try {
+      const user = await this.getUser();
+
+      if (!user) {
+        return {
+          full_name: 'Utilizador',
+          role: 'user',
+          email: ''
+        };
+      }
+
+      const metadata = user.user_metadata || {};
+
+      return {
+        full_name: metadata['full_name'] || user.email || 'Utilizador',
+        role: metadata['role'] || 'user',
+        email: user.email || ''
+      };
+    } catch (error) {
+      console.error('Erro ao obter perfil do utilizador:', error);
+      return {
+        full_name: 'Utilizador',
+        role: 'user',
+        email: ''
+      };
     }
   }
 
   async signIn(email: string, password: string) {
-    const response = await this.supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase.auth.signInWithPassword({
+          email,
+          password
+        }),
+        8000
+      );
 
-    if (response.error) {
-      console.error('Erro no login:', response.error.message);
-    } else {
-      this.currentUser = response.data.user ?? null;
-      this.sessionInitialized = true;
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado no login:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao iniciar sessão.')
+      };
     }
-
-    return response;
   }
 
   async signUp(email: string, password: string, fullName: string) {
-    const response = await this.supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName || 'Utilizador'
-        }
-      }
-    });
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              role: 'user'
+            }
+          }
+        }),
+        8000
+      );
 
-    if (response.error) {
-      console.error('Erro no registo:', response.error.message);
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao criar conta:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao criar conta.')
+      };
     }
-
-    return response;
   }
 
   async signOut() {
-    const response = await this.supabase.auth.signOut();
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase.auth.signOut(),
+        8000
+      );
 
-    if (response.error) {
-      console.error('Erro no logout:', response.error.message);
-    } else {
-      this.currentUser = null;
-      this.sessionInitialized = true;
+      return {
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao terminar sessão:', error);
+      return {
+        error: this.mensagemErro(error, 'Erro ao terminar sessão.')
+      };
     }
-
-    return response;
   }
 
-  async getUser(): Promise<User | null> {
-    await this.garantirSessaoPronta();
-
-    if (this.currentUser) {
-      return this.currentUser;
-    }
-
-    const { data: sessionData, error: sessionError } = await this.supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error('Erro ao obter sessão:', sessionError.message);
-    }
-
-    if (sessionData?.session?.user) {
-      this.currentUser = sessionData.session.user;
-      return this.currentUser;
-    }
-
-    const { data, error } = await this.supabase.auth.getUser();
-
-    if (error) {
-      console.error('Erro ao obter utilizador:', error.message);
-      return null;
-    }
-
-    this.currentUser = data.user ?? null;
-    return this.currentUser;
-  }
-
-  async criarPedido(pedido: {
+  async criarPedido(dados: {
     email: string;
     tipo_pedido: string;
     contacto: string;
     distrito: string;
     descricao: string;
+    [key: string]: any;
   }) {
-    const user = await this.getUser();
+    try {
+      const payload: any = {
+        ...dados
+      };
 
-    if (!user) {
-      console.error('Utilizador não autenticado');
-      return { data: null, error: new Error('Utilizador não autenticado') };
+      if (!payload.status) {
+        payload.status = 'Pendente';
+      }
+
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .insert([payload])
+          .select(),
+        8000
+      );
+
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao criar pedido:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao criar pedido.')
+      };
     }
-
-    const { data, error } = await this.supabase
-      .from('pedidos')
-      .insert([
-        {
-          user_id: user.id,
-          email: pedido.email,
-          tipo_pedido: pedido.tipo_pedido,
-          contacto: pedido.contacto,
-          distrito: pedido.distrito,
-          descricao: pedido.descricao,
-          status: 'Pendente'
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error('Erro ao criar pedido:', error.message);
-    }
-
-    return { data, error };
   }
 
   async obterPedidos() {
-    const user = await this.getUser();
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        8000
+      );
 
-    if (!user) {
-      console.error('Nenhum utilizador autenticado');
+      if (response?.error) {
+        console.error('Erro ao obter pedidos:', response.error.message);
+        return [];
+      }
+
+      return response?.data || [];
+    } catch (error: any) {
+      console.error('Erro inesperado ao obter pedidos:', error);
       return [];
     }
+  }
 
-    const metadata = user.user_metadata || {};
-    const isAdmin = (metadata['role'] ?? '') === 'admin';
+  async carregarPedidos() {
+    return await this.obterPedidos();
+  }
 
-    let query = this.supabase
-      .from('pedidos')
-      .select('*')
-      .order('created_at', { ascending: false });
+  async carregarMeusPedidos(email: string) {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .select('*')
+          .eq('email', email)
+          .order('created_at', { ascending: false }),
+        8000
+      );
 
-    if (!isAdmin) {
-      query = query.eq('user_id', user.id);
-    }
+      if (response?.error) {
+        console.error('Erro ao carregar meus pedidos:', response.error.message);
+        return [];
+      }
 
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Erro ao carregar pedidos:', error.message);
+      return response?.data || [];
+    } catch (error: any) {
+      console.error('Erro inesperado ao carregar meus pedidos:', error);
       return [];
     }
-
-    return data || [];
   }
 
-  async apagarPedido(id: number) {
-    const { error } = await this.supabase
-      .from('pedidos')
-      .delete()
-      .eq('id', id);
+  async apagarPedido(id: number | string) {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .delete()
+          .eq('id', id),
+        8000
+      );
 
-    if (error) {
-      console.error('Erro ao apagar pedido:', error.message);
+      return {
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao apagar pedido:', error);
+      return {
+        error: this.mensagemErro(error, 'Erro ao apagar pedido.')
+      };
     }
-
-    return { error };
   }
 
-  async atualizarStatusPedido(id: number, status: string) {
-    const { data, error } = await this.supabase
-      .from('pedidos')
-      .update({ status })
-      .eq('id', id)
-      .select();
+  async atualizarStatusPedido(id: number | string, status: string) {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .update({ status })
+          .eq('id', id)
+          .select(),
+        8000
+      );
 
-    if (error) {
-      console.error('Erro ao atualizar status do pedido:', error.message);
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao atualizar status do pedido:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
+      };
     }
-
-    return { data, error };
   }
 
-  async encaminharPedido(
-    id: number,
-    payload: {
-      recurso_id: number;
-      recurso_nome: string;
-      recurso_contacto: string;
-      recurso_website: string | null;
-      mensagem_encaminhamento: string;
-    }
-  ) {
-    const { data, error } = await this.supabase
-      .from('pedidos')
-      .update({
-        status: 'Encaminhado',
-        recurso_id: payload.recurso_id,
-        recurso_nome: payload.recurso_nome,
-        recurso_contacto: payload.recurso_contacto,
-        recurso_website: payload.recurso_website,
-        mensagem_encaminhamento: payload.mensagem_encaminhamento
-      })
-      .eq('id', id)
-      .select();
+  async encaminharPedido(id: number | string, dados: any) {
+    try {
+      let payload: any = {};
 
-    if (error) {
-      console.error('Erro ao encaminhar pedido:', error.message);
-    }
+      if (typeof dados === 'string') {
+        payload = {
+          encaminhado_para: dados,
+          status: 'Encaminhado'
+        };
+      } else {
+        payload = {
+          ...dados,
+          status: dados?.status || 'Encaminhado'
+        };
+      }
 
-    return { data, error };
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .update(payload)
+          .eq('id', id)
+          .select(),
+        8000
+      );
+
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao encaminhar pedido:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao encaminhar pedido.')
+      };
+    }
   }
 
   async obterRecursos() {
-    const { data, error } = await this.supabase
-      .from('recursos')
-      .select('*')
-      .eq('status', 'aprovado')
-      .order('nome', { ascending: true });
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('recursos')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        8000
+      );
 
-    if (error) {
-      console.error('Erro ao carregar recursos:', error.message);
+      if (response?.error) {
+        console.error('Erro ao obter recursos:', response.error.message);
+        return [];
+      }
+
+      const recursos = response?.data || [];
+      return recursos.filter((recurso: any) => this.recursoEstaAprovado(recurso));
+    } catch (error: any) {
+      console.error('Erro inesperado ao obter recursos:', error);
       return [];
     }
-
-    return data || [];
   }
 
-  async sugerirRecurso(
-    nome: string,
-    tipo: string,
-    contacto: string,
-    website: string,
-    distrito: string,
-    descricao: string
-  ) {
-    const { data, error } = await this.supabase
-      .from('recursos')
-      .insert([
-        {
-          nome,
-          tipo,
-          contacto,
-          website,
-          distrito,
-          descricao,
-          status: 'pendente'
-        }
-      ])
-      .select();
-
-    if (error) {
-      console.error('Erro ao sugerir recurso:', error.message);
-    }
-
-    return { data, error };
+  async carregarRecursos() {
+    return await this.obterRecursos();
   }
 
   async obterRecursosPendentes() {
-    const user = await this.getUser();
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('recursos')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        8000
+      );
 
-    if (!user) {
-      console.error('Nenhum utilizador autenticado');
+      if (response?.error) {
+        console.error('Erro ao obter recursos pendentes:', response.error.message);
+        return [];
+      }
+
+      const recursos = response?.data || [];
+      return recursos.filter((recurso: any) => this.recursoEstaPendente(recurso));
+    } catch (error: any) {
+      console.error('Erro inesperado ao obter recursos pendentes:', error);
       return [];
     }
-
-    const metadata = user.user_metadata || {};
-    const isAdmin = (metadata['role'] ?? '') === 'admin';
-
-    if (!isAdmin) {
-      console.error('Apenas admin pode ver recursos pendentes');
-      return [];
-    }
-
-    const { data, error } = await this.supabase
-      .from('recursos')
-      .select('*')
-      .eq('status', 'pendente')
-      .order('id', { ascending: false });
-
-    if (error) {
-      console.error('Erro ao carregar recursos pendentes:', error.message);
-      return [];
-    }
-
-    return data || [];
   }
 
-  async aprovarRecurso(id: number) {
-    const { data, error } = await this.supabase
-      .from('recursos')
-      .update({ status: 'aprovado' })
-      .eq('id', id)
-      .select();
-
-    if (error) {
-      console.error('Erro ao aprovar recurso:', error.message);
-    }
-
-    return { data, error };
+  async carregarRecursosPendentes() {
+    return await this.obterRecursosPendentes();
   }
 
-  async apagarRecursoPendente(id: number) {
-    const { error } = await this.supabase
-      .from('recursos')
-      .delete()
-      .eq('id', id);
+  async sugerirRecurso(
+    nomeOuObjeto: string | any,
+    tipo?: string,
+    contacto?: string,
+    website?: string,
+    distrito?: string,
+    descricao?: string
+  ) {
+    try {
+      let payloadBase: any;
 
-    if (error) {
-      console.error('Erro ao apagar recurso pendente:', error.message);
+      if (typeof nomeOuObjeto === 'object' && nomeOuObjeto !== null) {
+        payloadBase = {
+          ...nomeOuObjeto
+        };
+      } else {
+        const contactoLimpo = String(contacto ?? '').replace(/\D/g, '');
+
+        payloadBase = {
+          nome: nomeOuObjeto,
+          tipo,
+          contacto: contactoLimpo,
+          website,
+          distrito,
+          descricao
+        };
+      }
+
+      payloadBase.contacto = String(payloadBase.contacto ?? '').replace(/\D/g, '');
+
+      let response: any = await this.executarComTimeout(
+        this.supabase
+          .from('recursos')
+          .insert([{ ...payloadBase, status: 'pendente' }])
+          .select(),
+        8000
+      );
+
+      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")) {
+        response = await this.executarComTimeout(
+          this.supabase
+            .from('recursos')
+            .insert([{ ...payloadBase, estado: 'pendente' }])
+            .select(),
+          8000
+        );
+      }
+
+      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'estado' column")) {
+        response = await this.executarComTimeout(
+          this.supabase
+            .from('recursos')
+            .insert([payloadBase])
+            .select(),
+          8000
+        );
+      }
+
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao sugerir recurso:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao sugerir recurso.')
+      };
     }
+  }
 
-    return { error };
+  async aprovarRecurso(id: number | string) {
+    try {
+      let response: any = await this.executarComTimeout(
+        this.supabase
+          .from('recursos')
+          .update({ status: 'aprovado' })
+          .eq('id', id)
+          .select(),
+        8000
+      );
+
+      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")) {
+        response = await this.executarComTimeout(
+          this.supabase
+            .from('recursos')
+            .update({ estado: 'aprovado' })
+            .eq('id', id)
+            .select(),
+          8000
+        );
+      }
+
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao aprovar recurso:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao aprovar recurso.')
+      };
+    }
+  }
+
+  async apagarRecursoPendente(id: number | string) {
+    try {
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('recursos')
+          .delete()
+          .eq('id', id),
+        8000
+      );
+
+      return {
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao apagar recurso pendente:', error);
+      return {
+        error: this.mensagemErro(error, 'Erro ao apagar recurso.')
+      };
+    }
   }
 }

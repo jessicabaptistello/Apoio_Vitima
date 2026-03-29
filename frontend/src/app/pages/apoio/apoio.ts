@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase';
 
 @Component({
@@ -18,6 +18,13 @@ export class ApoioComponent implements OnInit {
 
   recursos: any[] = [];
   carregando: boolean = true;
+  enviandoSugestao: boolean = false;
+
+  readonly contactoPattern = '^[0-9]{9,15}$';
+
+  modalOpen: boolean = false;
+  modalTitle: string = '';
+  modalMessage: string = '';
 
   novoRecurso = {
     nome: '',
@@ -35,6 +42,20 @@ export class ApoioComponent implements OnInit {
 
   async ngOnInit() {
     await this.carregarRecursos();
+  }
+
+  abrirModal(titulo: string, mensagem: string) {
+    this.modalTitle = titulo;
+    this.modalMessage = mensagem;
+    this.modalOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  fecharModal() {
+    this.modalOpen = false;
+    this.modalTitle = '';
+    this.modalMessage = '';
+    this.cdr.detectChanges();
   }
 
   async carregarRecursos() {
@@ -80,39 +101,100 @@ export class ApoioComponent implements OnInit {
     });
   }
 
-  async sugerirNovoRecurso() {
-    const { nome, tipo, contacto, website, distrito, descricao } = this.novoRecurso;
+  public websiteOuEmailValido(valor: string): boolean {
+    const texto = (valor || '').trim();
 
-    if (!nome || !tipo || !contacto || !website || !distrito) {
-      alert('Preencha nome, tipo, contacto, website e distrito.');
+    if (!texto) return false;
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const websiteRegex = /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/i;
+
+    return emailRegex.test(texto) || websiteRegex.test(texto);
+  }
+
+  private limparContacto(valor: string): string {
+    return (valor || '').replace(/\D/g, '');
+  }
+
+  async sugerirNovoRecurso(form?: NgForm) {
+    if (this.enviandoSugestao) return;
+
+    const nome = this.novoRecurso.nome.trim();
+    const tipo = this.novoRecurso.tipo.trim();
+    const contactoOriginal = this.novoRecurso.contacto.trim();
+    const contacto = this.limparContacto(contactoOriginal);
+    const website = this.novoRecurso.website.trim();
+    const distrito = this.novoRecurso.distrito.trim();
+    const descricao = this.novoRecurso.descricao.trim();
+
+    if (!nome || !tipo || !contactoOriginal || !website || !distrito || !descricao) {
+      this.abrirModal('Campos obrigatórios', 'Todos os campos do recurso são obrigatórios.');
       return;
     }
 
-    const { error } = await this.supabaseService.sugerirRecurso(
-      nome,
-      tipo,
-      contacto,
-      website,
-      distrito,
-      descricao
-    );
-
-    if (error) {
-      alert('Erro ao enviar sugestão: ' + error.message);
+    if (nome.length < 3) {
+      this.abrirModal('Nome inválido', 'O nome do recurso deve ter pelo menos 3 caracteres.');
       return;
     }
 
-    alert('Sugestão enviada com sucesso! O recurso ficará pendente até aprovação.');
+    if (tipo.length < 4) {
+      this.abrirModal('Tipo inválido', 'O tipo de apoio deve ter pelo menos 4 caracteres.');
+      return;
+    }
 
-    this.novoRecurso = {
-      nome: '',
-      tipo: '',
-      contacto: '',
-      website: '',
-      distrito: '',
-      descricao: ''
-    };
+    if (!/^[0-9]{9,15}$/.test(contacto)) {
+      this.abrirModal('Contacto inválido', 'O contacto deve conter apenas números e ter entre 9 e 15 dígitos.');
+      return;
+    }
 
+    if (!this.websiteOuEmailValido(website)) {
+      this.abrirModal('Website ou email inválido', 'Introduza um website ou email válido.');
+      return;
+    }
+
+    if (descricao.length < 10) {
+      this.abrirModal('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
+      return;
+    }
+
+    this.enviandoSugestao = true;
     this.cdr.detectChanges();
+
+    try {
+      const { error } = await this.supabaseService.sugerirRecurso(
+        nome,
+        tipo,
+        contacto,
+        website,
+        distrito,
+        descricao
+      );
+
+      if (error) {
+        this.abrirModal('Erro ao enviar sugestão', error.message);
+        return;
+      }
+
+      this.abrirModal(
+        'Sugestão enviada',
+        'Sugestão enviada com sucesso! O recurso ficou pendente até aprovação do administrador.'
+      );
+
+      this.novoRecurso = {
+        nome: '',
+        tipo: '',
+        contacto: '',
+        website: '',
+        distrito: '',
+        descricao: ''
+      };
+
+      if (form) {
+        form.resetForm();
+      }
+    } finally {
+      this.enviandoSugestao = false;
+      this.cdr.detectChanges();
+    }
   }
 }

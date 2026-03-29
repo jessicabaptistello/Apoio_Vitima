@@ -1,5 +1,13 @@
 <div class="dashboard-layout">
   <a
+    href="/login"
+    (click)="fazerLogout($event)"
+    class="quick-logout"
+  >
+    LOG OUT
+  </a>
+
+  <a
     href="https://www.google.pt"
     (click)="logout($event)"
     class="quick-exit"
@@ -39,7 +47,6 @@
       <h4>Bem-vinda(o), a sua página de apoio.</h4>
     </header>
 
-    <!-- INÍCIO -->
     <section *ngIf="activeSection === 'info'" class="centered-content">
       <div class="form-container">
         <span class="eyebrow">NOVO PEDIDO</span>
@@ -57,7 +64,7 @@
                 required
                 email
               />
-              <small class="validation-message" *ngIf="emailModel.invalid && emailModel.touched">
+              <small class="validation-error" *ngIf="novoPedido.email && emailModel.invalid">
                 Introduza um email válido.
               </small>
             </div>
@@ -75,8 +82,8 @@
                   {{ tipo }}
                 </option>
               </select>
-              <small class="validation-message" *ngIf="tipoPedidoModel.invalid && tipoPedidoModel.touched">
-                O tipo de pedido é obrigatório.
+              <small class="validation-error" *ngIf="!novoPedido.tipo_pedido && tipoPedidoModel.touched">
+                O tipo de apoio é obrigatório.
               </small>
             </div>
 
@@ -92,8 +99,8 @@
                 inputmode="numeric"
                 maxlength="15"
               />
-              <small class="validation-message" *ngIf="contactoModel.invalid && contactoModel.touched">
-                Introduza apenas números, entre 9 e 15 dígitos.
+              <small class="validation-error" *ngIf="novoPedido.contacto && contactoModel.invalid">
+                Introduza apenas números, com pelo menos 9 dígitos.
               </small>
             </div>
 
@@ -110,7 +117,7 @@
                   {{ distrito }}
                 </option>
               </select>
-              <small class="validation-message" *ngIf="distritoModel.invalid && distritoModel.touched">
+              <small class="validation-error" *ngIf="!novoPedido.distrito && distritoModel.touched">
                 O distrito é obrigatório.
               </small>
             </div>
@@ -125,8 +132,8 @@
               required
               minlength="10"
             ></textarea>
-            <small class="validation-message" *ngIf="descricaoModel.invalid && descricaoModel.touched">
-              A descrição é obrigatória e deve ter pelo menos 10 caracteres.
+            <small class="validation-error" *ngIf="novoPedido.descricao && novoPedido.descricao.length > 0 && novoPedido.descricao.length < 10">
+              A descrição deve ter pelo menos 10 caracteres.
             </small>
           </div>
 
@@ -151,7 +158,6 @@
       </div>
     </section>
 
-    <!-- MEUS PEDIDOS -->
     <section *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
       <h2 class="section-title">Os Meus Pedidos</h2>
 
@@ -210,7 +216,6 @@
       </div>
     </section>
 
-    <!-- TODOS OS PEDIDOS -->
     <section *ngIf="activeSection === 'todos-pedidos' && isAdmin" class="centered-content">
       <h2 class="section-title">Painel de Gestão</h2>
 
@@ -302,7 +307,6 @@
       </div>
     </section>
 
-    <!-- RECURSOS PENDENTES -->
     <section *ngIf="activeSection === 'recursos-pendentes'" class="centered-content">
       <h2 class="section-title">Recursos Pendentes</h2>
 
@@ -346,7 +350,6 @@
       </div>
     </section>
 
-    <!-- STATUS -->
     <section *ngIf="activeSection === 'status'" class="centered-content">
       <h2 class="section-title">Status dos Pedidos</h2>
 

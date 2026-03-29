@@ -174,14 +174,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  private abrirModalAlerta(titulo: string, mensagem: string) {
+  abrirModalAlerta(titulo: string, mensagem: string) {
     this.modalTitle = titulo;
     this.modalMessage = mensagem;
     this.modalMode = 'alert';
     this.modalOpen = true;
   }
 
-  private abrirModalConfirmacao(titulo: string, mensagem: string): Promise<boolean> {
+  abrirModalConfirmacao(titulo: string, mensagem: string): Promise<boolean> {
     this.modalTitle = titulo;
     this.modalMessage = mensagem;
     this.modalMode = 'confirm';
@@ -217,16 +217,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.pedidoSubmitting) return;
 
     const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
+    const emailLimpo = (email || '').trim();
+    const tipoLimpo = (tipo_pedido || '').trim();
     const contactoLimpo = (contacto || '').trim();
     const descricaoLimpa = (descricao || '').trim();
 
-    if (!email || !tipo_pedido || !contactoLimpo || !distrito || !descricaoLimpa) {
-      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido.');
+    if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distrito || !descricaoLimpa) {
+      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido de ajuda.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+      this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
       return;
     }
 
     if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
-      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números, com 9 a 15 dígitos.');
+      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter pelo menos 9 dígitos.');
       return;
     }
 
@@ -238,11 +245,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.pedidoSubmitting = true;
 
     try {
-      await this.supabaseService.garantirSessaoPronta();
-
       const { data, error } = await this.supabaseService.criarPedido({
-        email: email.trim(),
-        tipo_pedido,
+        email: emailLimpo,
+        tipo_pedido: tipoLimpo,
         contacto: contactoLimpo,
         distrito,
         descricao: descricaoLimpa
@@ -265,10 +270,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
         await this.carregarPedidos();
       }
 
-      this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
-
       this.novoPedido = {
-        email,
+        email: emailLimpo,
         tipo_pedido: '',
         contacto: '',
         distrito: '',
@@ -276,13 +279,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       };
 
       if (form) {
-        form.resetForm({
-          email
-        });
+        form.resetForm({ email: emailLimpo });
       }
 
       this.activeSection = 'meus-pedidos';
       this.cdr.detectChanges();
+      this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
     } finally {
       this.pedidoSubmitting = false;
     }
@@ -292,21 +294,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
-  async logout(event: Event) {
+  async fazerLogout(event: Event) {
     event.preventDefault();
-
-    const confirmar = await this.abrirModalConfirmacao('Sair', 'Tem a certeza que deseja sair?');
-    if (!confirmar) return;
-
-    this.nomeutilizador = 'Utilizador';
-    this.isAdmin = false;
-    this.pedidos = [];
-    this.recursosPendentes = [];
-    this.recursosAprovados = [];
-    this.recursoSelecionadoPorPedido = {};
-    this.cdr.detectChanges();
-
     await this.supabaseService.signOut();
+    await this.router.navigate(['/login']);
+  }
+
+  logout(event: Event) {
+    event.preventDefault();
     window.location.href = 'https://www.google.pt';
   }
 
@@ -323,9 +318,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.pedidos = this.pedidos.filter((p) => p.id !== pedido.id);
-    delete this.recursoSelecionadoPorPedido[pedido.id];
-
+    await this.carregarPedidos();
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Pedido apagado com sucesso!');
   }
@@ -342,7 +335,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    pedido.status = novoStatus;
+    await this.carregarPedidos();
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Status atualizado com sucesso!');
   }
@@ -379,13 +372,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    pedido.status = 'Encaminhado';
-    pedido.recurso_id = recurso.id;
-    pedido.recurso_nome = recurso.nome;
-    pedido.recurso_contacto = recurso.contacto;
-    pedido.recurso_website = recurso.website || null;
-    pedido.mensagem_encaminhamento = mensagem;
-
+    await this.carregarPedidos();
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Pedido encaminhado com sucesso!');
   }
@@ -424,27 +411,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
     if (!confirmar) return;
 
-    const { data, error } = await this.supabaseService.aprovarRecurso(recurso.id);
+    const { error } = await this.supabaseService.aprovarRecurso(recurso.id);
 
     if (error) {
       this.abrirModalAlerta('Erro ao aprovar recurso', error.message);
       return;
     }
 
-    this.recursosPendentes = this.recursosPendentes.filter((r) => r.id !== recurso.id);
-
-    const recursoAprovado = Array.isArray(data) ? data[0] : null;
-    if (recursoAprovado) {
-      const jaExiste = this.recursosAprovados.some((r) => r.id === recursoAprovado.id);
-      if (!jaExiste) {
-        this.recursosAprovados = [...this.recursosAprovados, recursoAprovado].sort((a, b) =>
-          String(a.nome).localeCompare(String(b.nome))
-        );
-      }
-    } else {
-      await this.carregarRecursosAprovados();
-    }
-
+    await this.carregarRecursosPendentes();
+    await this.carregarRecursosAprovados();
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Recurso aprovado com sucesso!');
   }
@@ -465,9 +440,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.recursosPendentes = this.recursosPendentes.filter((r) => r.id !== recurso.id);
-    this.recursosAprovados = this.recursosAprovados.filter((r) => r.id !== recurso.id);
-
+    await this.carregarRecursosPendentes();
+    await this.carregarRecursosAprovados();
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Recurso rejeitado com sucesso!');
   }

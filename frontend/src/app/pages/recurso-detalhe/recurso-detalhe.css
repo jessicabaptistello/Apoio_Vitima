@@ -1,8 +1,8 @@
 :host {
-  --terracota: #a65d47;
-  --terracota-escura: #8f4d3a;
-  --verde-acinzentado: #8a9a8e;
-  --verde-suave: #eef3ef;
+  --terracota: #f6abb6;
+  --terracota-escura: #f4b6c2;
+  --verde-acinzentado: #ead5dc;
+  --verde-suave: #eee3e7;
   --creme-fundo: #fdf9f5;
   --branco: #ffffff;
   --texto-escuro: #2c3e50;
@@ -62,7 +62,7 @@
   background: var(--terracota);
   color: var(--branco);
   border: none;
-  box-shadow: 0 8px 20px rgba(166, 93, 71, 0.18);
+  box-shadow: 0 8px 20px rgba(246, 171, 182, 0.18);
 }
 
 .btn-top:hover {
@@ -127,7 +127,7 @@
   padding: 7px 12px;
   border-radius: 999px;
   background: var(--verde-suave);
-  color: #5b7060;
+  color: #f6abb6;
   font-size: 0.84rem;
   font-weight: 800;
 }
@@ -196,45 +196,4 @@
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-  .detalhe-header {
-    padding: 22px 20px 10px;
-  }
-
-  .detalhe-content {
-    padding: 20px 16px 60px;
-  }
-
-  .topbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .topbar-actions {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .btn-top,
-  .btn-outline {
-    width: 100%;
-  }
-
-  .detalhe-card {
-    padding: 24px 18px;
-  }
-
-  .card-top h2 {
-    font-size: 1.9rem;
-  }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .acoes {
-    flex-direction: column;
-  }
 }

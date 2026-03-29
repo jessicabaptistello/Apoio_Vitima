@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase';
 
@@ -27,74 +27,86 @@ export class LoginComponent {
     private router: Router
   ) {}
 
-  private limparMensagens() {
+  usarDadosParaLogin() {
     this.errorMessage = '';
     this.successMessage = '';
   }
 
-  private obterMensagemErroLogin(message: string): string {
+  private traduzirErroLogin(message: string): string {
     const texto = (message || '').toLowerCase();
 
-    if (
-      texto.includes('invalid login credentials') ||
-      texto.includes('email not confirmed') ||
-      texto.includes('invalid_credentials')
-    ) {
-      return 'Utilizador inexistente ou palavra-passe incorreta.';
+    if (texto.includes('invalid login credentials')) {
+      return 'Utilizador não encontrado ou palavra-passe incorreta.';
+    }
+
+    if (texto.includes('timeout')) {
+      return 'A ligação demorou demasiado. Tente novamente.';
+    }
+
+    if (texto.includes('email not confirmed')) {
+      return 'Conta criada, mas o email ainda não foi confirmado.';
     }
 
     return message || 'Não foi possível iniciar sessão.';
   }
 
-  private obterMensagemErroRegisto(message: string): string {
+  private traduzirErroRegisto(message: string): string {
     const texto = (message || '').toLowerCase();
 
     if (texto.includes('user already registered')) {
       return 'Este email já está registado.';
     }
 
+    if (texto.includes('timeout')) {
+      return 'A conta pode ter sido criada. Tente clicar em "Entrar".';
+    }
+
     return message || 'Não foi possível criar a conta.';
   }
 
-  async handleLogin(form?: NgForm) {
+  async handleLogin() {
     if (this.loadingLogin || this.loadingSignUp) return;
 
-    this.loadingLogin = true;
-    this.limparMensagens();
+    this.errorMessage = '';
+    this.successMessage = '';
 
     if (!this.email || !this.password) {
       this.errorMessage = 'Preencha email e palavra-passe.';
-      this.loadingLogin = false;
       return;
     }
 
+    this.loadingLogin = true;
+
     try {
-      const { error } = await this.supabaseService.signIn(this.email.trim(), this.password);
+      const { error } = await this.supabaseService.signIn(
+        this.email.trim(),
+        this.password
+      );
 
       if (error) {
-        this.errorMessage = this.obterMensagemErroLogin(error.message);
+        this.errorMessage = this.traduzirErroLogin(error.message);
         return;
       }
 
+      this.successMessage = 'Entrada efetuada com sucesso.';
       await this.router.navigate(['/dashboard']);
-    } catch {
-      this.errorMessage = 'Ocorreu um erro ao tentar entrar.';
     } finally {
       this.loadingLogin = false;
     }
   }
 
-  async handleSignUp(form?: NgForm) {
+  async handleSignUp() {
     if (this.loadingLogin || this.loadingSignUp) return;
 
-    this.loadingSignUp = true;
-    this.limparMensagens();
+    this.errorMessage = '';
+    this.successMessage = '';
 
     if (!this.email || !this.password) {
       this.errorMessage = 'Preencha email e palavra-passe para criar a conta.';
-      this.loadingSignUp = false;
       return;
     }
+
+    this.loadingSignUp = true;
 
     try {
       const { error } = await this.supabaseService.signUp(
@@ -104,19 +116,13 @@ export class LoginComponent {
       );
 
       if (error) {
-        this.errorMessage = this.obterMensagemErroRegisto(error.message);
+        this.errorMessage = this.traduzirErroRegisto(error.message);
         return;
       }
 
-      this.successMessage = 'Conta criada com sucesso! Agora pode clicar em "Entrar".';
-    } catch {
-      this.errorMessage = 'Ocorreu um erro ao criar a conta.';
+      this.successMessage = 'Conta criada com sucesso. Agora pode clicar em "Entrar".';
     } finally {
       this.loadingSignUp = false;
     }
-  }
-
-  usarDadosParaLogin() {
-    this.successMessage = '';
   }
 }

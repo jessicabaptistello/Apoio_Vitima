@@ -16,7 +16,7 @@
       {{ successMessage }}
     </div>
 
-    <form #loginForm="ngForm" (submit)="$event.preventDefault()" novalidate>
+    <form (submit)="$event.preventDefault()" novalidate>
       <div class="input-group">
         <label for="nome">Nome Completo (opcional)</label>
         <input
@@ -41,7 +41,7 @@
           required
           email
         >
-        <small class="validation-message" *ngIf="emailModel.invalid && emailModel.touched">
+        <small class="validation-error" *ngIf="email && emailModel.invalid">
           Introduza um e-mail válido.
         </small>
       </div>
@@ -59,7 +59,7 @@
           required
           minlength="6"
         >
-        <small class="validation-message" *ngIf="passwordModel.invalid && passwordModel.touched">
+        <small class="validation-error" *ngIf="password && password.length > 0 && password.length < 6">
           A palavra-passe deve ter pelo menos 6 caracteres.
         </small>
       </div>
@@ -67,7 +67,7 @@
       <div class="button-stack">
         <button
           type="button"
-          (click)="handleLogin(loginForm)"
+          (click)="handleLogin()"
           [disabled]="loadingLogin || loadingSignUp"
           class="btn-login"
         >
@@ -76,7 +76,7 @@
 
         <button
           type="button"
-          (click)="handleSignUp(loginForm)"
+          (click)="handleSignUp()"
           [disabled]="loadingLogin || loadingSignUp"
           class="btn-register"
         >
