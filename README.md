@@ -181,4 +181,4 @@ ng teste
 
 Backend funcional com deploy automatico no Render: https://apoio-vitima.onrender.com
 
-Frontend com deploy automatico no Vercel: https://apoio-vitima-648gjnl0w-jessicabaptistellos-projects.vercel.app/
+Frontend com deploy automatico no Vercel: https://apoio-vitima.vercel.app/
