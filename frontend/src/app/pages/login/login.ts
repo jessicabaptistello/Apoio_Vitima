@@ -35,11 +35,15 @@ export class LoginComponent {
   private traduzirErroLogin(message: string): string {
     const texto = (message || '').toLowerCase();
 
-    if (texto.includes('invalid login credentials')) {
+    if (
+      texto.includes('invalid login credentials') ||
+      texto.includes('user not found') ||
+      texto.includes('invalid_credentials')
+    ) {
       return 'Utilizador não encontrado ou palavra-passe incorreta.';
     }
 
-    if (texto.includes('timeout')) {
+    if (texto.includes('timeout') || texto.includes('tempo limite')) {
       return 'A ligação demorou demasiado. Tente novamente.';
     }
 
@@ -57,7 +61,7 @@ export class LoginComponent {
       return 'Este email já está registado.';
     }
 
-    if (texto.includes('timeout')) {
+    if (texto.includes('timeout') || texto.includes('tempo limite')) {
       return 'A conta pode ter sido criada. Tente clicar em "Entrar".';
     }
 
@@ -70,7 +74,10 @@ export class LoginComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.email || !this.password) {
+    const emailLimpo = this.email.trim();
+    const passwordLimpa = this.password;
+
+    if (!emailLimpo || !passwordLimpa) {
       this.errorMessage = 'Preencha email e palavra-passe.';
       return;
     }
@@ -79,8 +86,8 @@ export class LoginComponent {
 
     try {
       const { error } = await this.supabaseService.signIn(
-        this.email.trim(),
-        this.password
+        emailLimpo,
+        passwordLimpa
       );
 
       if (error) {
@@ -90,6 +97,9 @@ export class LoginComponent {
 
       this.successMessage = 'Entrada efetuada com sucesso.';
       await this.router.navigate(['/dashboard']);
+    } catch (error: any) {
+      console.error('Erro inesperado no login:', error);
+      this.errorMessage = this.traduzirErroLogin(error?.message || '');
     } finally {
       this.loadingLogin = false;
     }
@@ -101,7 +111,11 @@ export class LoginComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.email || !this.password) {
+    const emailLimpo = this.email.trim();
+    const passwordLimpa = this.password;
+    const nomeLimpo = this.nomeCompleto.trim();
+
+    if (!emailLimpo || !passwordLimpa) {
       this.errorMessage = 'Preencha email e palavra-passe para criar a conta.';
       return;
     }
@@ -110,9 +124,9 @@ export class LoginComponent {
 
     try {
       const { error } = await this.supabaseService.signUp(
-        this.email.trim(),
-        this.password,
-        this.nomeCompleto.trim()
+        emailLimpo,
+        passwordLimpa,
+        nomeLimpo
       );
 
       if (error) {
@@ -121,6 +135,10 @@ export class LoginComponent {
       }
 
       this.successMessage = 'Conta criada com sucesso. Agora pode clicar em "Entrar".';
+      this.password = '';
+    } catch (error: any) {
+      console.error('Erro inesperado ao criar conta:', error);
+      this.errorMessage = this.traduzirErroRegisto(error?.message || '');
     } finally {
       this.loadingSignUp = false;
     }
