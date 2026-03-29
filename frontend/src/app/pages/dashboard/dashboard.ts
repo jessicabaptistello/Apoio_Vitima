@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SaudacaoPipe } from '../../saudacao-pipe';
 import { SupabaseService } from '../../services/supabase';
@@ -61,6 +61,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     { nome: 'SNS 24', numero: '808242424', descricao: 'Apoio Medico' },
     { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico' }
   ];
+
+  pedidoSubmitting: boolean = false;
+  readonly contactoPattern = '^[0-9]{9,15}$';
+
+  modalOpen: boolean = false;
+  modalTitle: string = '';
+  modalMessage: string = '';
+  modalMode: 'alert' | 'confirm' = 'alert';
+  private modalResolver: ((value: boolean) => void) | null = null;
 
   constructor(
     private supabaseService: SupabaseService,
@@ -165,53 +174,118 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async enviarPedido() {
-    const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
+  private abrirModalAlerta(titulo: string, mensagem: string) {
+    this.modalTitle = titulo;
+    this.modalMessage = mensagem;
+    this.modalMode = 'alert';
+    this.modalOpen = true;
+  }
 
-    if (!email || !tipo_pedido || !contacto || !distrito || !descricao) {
-      alert('Preencha todos os campos do pedido.');
-      return;
-    }
+  private abrirModalConfirmacao(titulo: string, mensagem: string): Promise<boolean> {
+    this.modalTitle = titulo;
+    this.modalMessage = mensagem;
+    this.modalMode = 'confirm';
+    this.modalOpen = true;
 
-    await this.supabaseService.garantirSessaoPronta();
-
-    const { data, error } = await this.supabaseService.criarPedido({
-      email,
-      tipo_pedido,
-      contacto,
-      distrito,
-      descricao
+    return new Promise((resolve) => {
+      this.modalResolver = resolve;
     });
+  }
 
-    if (error) {
-      alert('Erro ao enviar pedido: ' + error.message);
+  fecharModal() {
+    this.modalOpen = false;
+    this.modalTitle = '';
+    this.modalMessage = '';
+    this.modalMode = 'alert';
+
+    if (this.modalResolver) {
+      this.modalResolver(false);
+      this.modalResolver = null;
+    }
+  }
+
+  confirmarModal() {
+    this.modalOpen = false;
+
+    if (this.modalResolver) {
+      this.modalResolver(true);
+      this.modalResolver = null;
+    }
+  }
+
+  async enviarPedido(form?: NgForm) {
+    if (this.pedidoSubmitting) return;
+
+    const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
+    const contactoLimpo = (contacto || '').trim();
+    const descricaoLimpa = (descricao || '').trim();
+
+    if (!email || !tipo_pedido || !contactoLimpo || !distrito || !descricaoLimpa) {
+      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido.');
       return;
     }
 
-    const pedidoCriado = Array.isArray(data) ? data[0] : null;
-
-    if (pedidoCriado) {
-      this.pedidos = [
-        { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
-        ...this.pedidos
-      ];
-      this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
-    } else {
-      await this.carregarPedidos();
+    if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
+      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números, com 9 a 15 dígitos.');
+      return;
     }
 
-    alert('Pedido enviado com sucesso!');
+    if (descricaoLimpa.length < 10) {
+      this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
+      return;
+    }
 
-    this.novoPedido = {
-      email,
-      tipo_pedido: '',
-      contacto: '',
-      distrito: '',
-      descricao: ''
-    };
+    this.pedidoSubmitting = true;
 
-    this.activeSection = 'meus-pedidos';
-    this.cdr.detectChanges();
+    try {
+      await this.supabaseService.garantirSessaoPronta();
+
+      const { data, error } = await this.supabaseService.criarPedido({
+        email: email.trim(),
+        tipo_pedido,
+        contacto: contactoLimpo,
+        distrito,
+        descricao: descricaoLimpa
+      });
+
+      if (error) {
+        this.abrirModalAlerta('Erro ao enviar pedido', error.message);
+        return;
+      }
+
+      const pedidoCriado = Array.isArray(data) ? data[0] : null;
+
+      if (pedidoCriado) {
+        this.pedidos = [
+          { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
+          ...this.pedidos
+        ];
+        this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
+      } else {
+        await this.carregarPedidos();
+      }
+
+      this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
+
+      this.novoPedido = {
+        email,
+        tipo_pedido: '',
+        contacto: '',
+        distrito: '',
+        descricao: ''
+      };
+
+      if (form) {
+        form.resetForm({
+          email
+        });
+      }
+
+      this.activeSection = 'meus-pedidos';
+      this.cdr.detectChanges();
+    } finally {
+      this.pedidoSubmitting = false;
+    }
   }
 
   verDetalhePedido(pedido: any) {
@@ -221,10 +295,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async logout(event: Event) {
     event.preventDefault();
 
-    const confirmar = confirm('Tem a certeza que deseja sair?');
+    const confirmar = await this.abrirModalConfirmacao('Sair', 'Tem a certeza que deseja sair?');
     if (!confirmar) return;
-
-    await this.supabaseService.signOut();
 
     this.nomeutilizador = 'Utilizador';
     this.isAdmin = false;
@@ -232,22 +304,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recursosPendentes = [];
     this.recursosAprovados = [];
     this.recursoSelecionadoPorPedido = {};
-
     this.cdr.detectChanges();
-    alert('Sessão encerrada!');
+
+    await this.supabaseService.signOut();
     window.location.href = 'https://www.google.pt';
   }
 
   async apagarPedido(pedido: any) {
     if (!this.isAdmin) return;
 
-    const confirmar = confirm('Tem a certeza que deseja apagar este pedido?');
+    const confirmar = await this.abrirModalConfirmacao('Apagar pedido', 'Tem a certeza que deseja apagar este pedido?');
     if (!confirmar) return;
 
     const { error } = await this.supabaseService.apagarPedido(pedido.id);
 
     if (error) {
-      alert('Erro ao apagar pedido: ' + error.message);
+      this.abrirModalAlerta('Erro ao apagar pedido', error.message);
       return;
     }
 
@@ -255,7 +327,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     delete this.recursoSelecionadoPorPedido[pedido.id];
 
     this.cdr.detectChanges();
-    alert('Pedido apagado com sucesso!');
+    this.abrirModalAlerta('Sucesso', 'Pedido apagado com sucesso!');
   }
 
   async atualizarStatusPedido(pedido: any, novoStatus: string) {
@@ -266,13 +338,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const { error } = await this.supabaseService.atualizarStatusPedido(pedido.id, novoStatus);
 
     if (error) {
-      alert('Erro ao atualizar status: ' + error.message);
+      this.abrirModalAlerta('Erro ao atualizar status', error.message);
       return;
     }
 
     pedido.status = novoStatus;
     this.cdr.detectChanges();
-    alert('Status atualizado com sucesso!');
+    this.abrirModalAlerta('Sucesso', 'Status atualizado com sucesso!');
   }
 
   async encaminharPedido(pedido: any) {
@@ -281,14 +353,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const recursoId = this.recursoSelecionadoPorPedido[pedido.id];
 
     if (!recursoId) {
-      alert('Selecione um recurso antes de encaminhar.');
+      this.abrirModalAlerta('Recurso obrigatório', 'Selecione um recurso antes de encaminhar.');
       return;
     }
 
     const recurso = this.recursosAprovados.find((r: any) => r.id === Number(recursoId));
 
     if (!recurso) {
-      alert('Recurso não encontrado.');
+      this.abrirModalAlerta('Erro', 'Recurso não encontrado.');
       return;
     }
 
@@ -303,7 +375,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
 
     if (error) {
-      alert('Erro ao encaminhar pedido: ' + error.message);
+      this.abrirModalAlerta('Erro ao encaminhar pedido', error.message);
       return;
     }
 
@@ -315,7 +387,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     pedido.mensagem_encaminhamento = mensagem;
 
     this.cdr.detectChanges();
-    alert('Pedido encaminhado com sucesso!');
+    this.abrirModalAlerta('Sucesso', 'Pedido encaminhado com sucesso!');
   }
 
   obterLinkEmailSimulado(pedido: any): string {
@@ -333,7 +405,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       pedido.mensagem_encaminhamento ||
       `O seu pedido foi encaminhado para ${pedido.recurso_nome || 'um recurso de apoio'}.`;
 
-    alert(
+    this.abrirModalAlerta(
+      'Mensagem de email',
       `ASSUNTO: Encaminhamento de pedido de apoio\n\n${mensagem}\n\nEste email é apenas preparado, não é enviado automaticamente.`
     );
   }
@@ -345,13 +418,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   async aprovarRecurso(recurso: any) {
     if (!this.isAdmin) return;
 
-    const confirmar = confirm(`Deseja aprovar o recurso "${recurso.nome}"?`);
+    const confirmar = await this.abrirModalConfirmacao(
+      'Aprovar recurso',
+      `Deseja aprovar o recurso "${recurso.nome}"?`
+    );
     if (!confirmar) return;
 
     const { data, error } = await this.supabaseService.aprovarRecurso(recurso.id);
 
     if (error) {
-      alert('Erro ao aprovar recurso: ' + error.message);
+      this.abrirModalAlerta('Erro ao aprovar recurso', error.message);
       return;
     }
 
@@ -370,19 +446,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
 
     this.cdr.detectChanges();
-    alert('Recurso aprovado com sucesso!');
+    this.abrirModalAlerta('Sucesso', 'Recurso aprovado com sucesso!');
   }
 
   async rejeitarRecurso(recurso: any) {
     if (!this.isAdmin) return;
 
-    const confirmar = confirm(`Deseja rejeitar/apagar o recurso "${recurso.nome}"?`);
+    const confirmar = await this.abrirModalConfirmacao(
+      'Rejeitar recurso',
+      `Deseja rejeitar/apagar o recurso "${recurso.nome}"?`
+    );
     if (!confirmar) return;
 
     const { error } = await this.supabaseService.apagarRecursoPendente(recurso.id);
 
     if (error) {
-      alert('Erro ao rejeitar recurso: ' + error.message);
+      this.abrirModalAlerta('Erro ao rejeitar recurso', error.message);
       return;
     }
 
@@ -390,7 +469,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recursosAprovados = this.recursosAprovados.filter((r) => r.id !== recurso.id);
 
     this.cdr.detectChanges();
-    alert('Recurso rejeitado com sucesso!');
+    this.abrirModalAlerta('Sucesso', 'Recurso rejeitado com sucesso!');
   }
 
   getStatusClass(status: string): string {

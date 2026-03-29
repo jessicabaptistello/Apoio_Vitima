@@ -45,46 +45,99 @@
         <span class="eyebrow">NOVO PEDIDO</span>
         <h2>Pedido de Ajuda</h2>
 
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="novoPedido.email" />
+        <form #pedidoForm="ngForm" (ngSubmit)="enviarPedido(pedidoForm)" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="novoPedido.email"
+                #emailModel="ngModel"
+                required
+                email
+              />
+              <small class="validation-message" *ngIf="emailModel.invalid && emailModel.touched">
+                Introduza um email válido.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de Pedido</label>
+              <select
+                name="tipo_pedido"
+                [(ngModel)]="novoPedido.tipo_pedido"
+                #tipoPedidoModel="ngModel"
+                required
+              >
+                <option value="">Selecione</option>
+                <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                  {{ tipo }}
+                </option>
+              </select>
+              <small class="validation-message" *ngIf="tipoPedidoModel.invalid && tipoPedidoModel.touched">
+                O tipo de pedido é obrigatório.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Contacto</label>
+              <input
+                type="tel"
+                name="contacto"
+                [(ngModel)]="novoPedido.contacto"
+                #contactoModel="ngModel"
+                required
+                [pattern]="contactoPattern"
+                inputmode="numeric"
+                maxlength="15"
+              />
+              <small class="validation-message" *ngIf="contactoModel.invalid && contactoModel.touched">
+                Introduza apenas números, entre 9 e 15 dígitos.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Distrito</label>
+              <select
+                name="distrito"
+                [(ngModel)]="novoPedido.distrito"
+                #distritoModel="ngModel"
+                required
+              >
+                <option value="">Selecione</option>
+                <option *ngFor="let distrito of distritos" [value]="distrito">
+                  {{ distrito }}
+                </option>
+              </select>
+              <small class="validation-message" *ngIf="distritoModel.invalid && distritoModel.touched">
+                O distrito é obrigatório.
+              </small>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Tipo de Pedido</label>
-            <select [(ngModel)]="novoPedido.tipo_pedido">
-              <option value="">Selecione</option>
-              <option *ngFor="let tipo of tiposPedido" [value]="tipo">
-                {{ tipo }}
-              </option>
-            </select>
+          <div class="form-group descricao-group">
+            <label>Descrição</label>
+            <textarea
+              name="descricao"
+              [(ngModel)]="novoPedido.descricao"
+              #descricaoModel="ngModel"
+              required
+              minlength="10"
+            ></textarea>
+            <small class="validation-message" *ngIf="descricaoModel.invalid && descricaoModel.touched">
+              A descrição é obrigatória e deve ter pelo menos 10 caracteres.
+            </small>
           </div>
 
-          <div class="form-group">
-            <label>Contacto</label>
-            <input type="text" [(ngModel)]="novoPedido.contacto" />
-          </div>
-
-          <div class="form-group">
-            <label>Distrito</label>
-            <select [(ngModel)]="novoPedido.distrito">
-              <option value="">Selecione</option>
-              <option *ngFor="let distrito of distritos" [value]="distrito">
-                {{ distrito }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group descricao-group">
-          <label>Descrição</label>
-          <textarea [(ngModel)]="novoPedido.descricao"></textarea>
-        </div>
-
-        <button type="button" class="btn-send" (click)="enviarPedido()">
-          Enviar Pedido
-        </button>
+          <button
+            type="submit"
+            class="btn-send"
+            [disabled]="pedidoSubmitting"
+          >
+            {{ pedidoSubmitting ? 'A enviar...' : 'Enviar Pedido' }}
+          </button>
+        </form>
       </div>
 
       <h2 class="section-title">Linhas de Apoio Imediato</h2>
@@ -357,4 +410,40 @@
       </div>
     </section>
   </main>
+</div>
+
+<div *ngIf="modalOpen" class="custom-modal-backdrop">
+  <div class="custom-modal">
+    <h3>{{ modalTitle }}</h3>
+    <p style="white-space: pre-line;">{{ modalMessage }}</p>
+
+    <div class="custom-modal-actions">
+      <button
+        *ngIf="modalMode === 'confirm'"
+        type="button"
+        class="btn-outline"
+        (click)="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        *ngIf="modalMode === 'confirm'"
+        type="button"
+        class="editar"
+        (click)="confirmarModal()"
+      >
+        Confirmar
+      </button>
+
+      <button
+        *ngIf="modalMode === 'alert'"
+        type="button"
+        class="editar"
+        (click)="fecharModal()"
+      >
+        OK
+      </button>
+    </div>
+  </div>
 </div>

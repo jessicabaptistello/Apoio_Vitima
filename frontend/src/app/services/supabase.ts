@@ -13,9 +13,6 @@ export class SupabaseService {
   private sessionInitPromise: Promise<void>;
 
   constructor() {
-    console.log('Supabase URL:', environment.supabaseUrl);
-    console.log('Supabase Key existe?', !!environment.supabaseKey);
-
     this.supabase = createClient(
       environment.supabaseUrl,
       environment.supabaseKey,

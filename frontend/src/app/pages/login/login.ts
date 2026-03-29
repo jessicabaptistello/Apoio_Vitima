@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../services/supabase';
 
@@ -27,42 +27,93 @@ export class LoginComponent {
     private router: Router
   ) {}
 
-  async handleLogin() {
-    this.loadingLogin = true;
+  private limparMensagens() {
     this.errorMessage = '';
     this.successMessage = '';
+  }
 
-    const { error } = await this.supabaseService.signIn(this.email, this.password);
+  private obterMensagemErroLogin(message: string): string {
+    const texto = (message || '').toLowerCase();
 
-    if (error) {
-      this.errorMessage = error.message;
+    if (
+      texto.includes('invalid login credentials') ||
+      texto.includes('email not confirmed') ||
+      texto.includes('invalid_credentials')
+    ) {
+      return 'Utilizador inexistente ou palavra-passe incorreta.';
+    }
+
+    return message || 'Não foi possível iniciar sessão.';
+  }
+
+  private obterMensagemErroRegisto(message: string): string {
+    const texto = (message || '').toLowerCase();
+
+    if (texto.includes('user already registered')) {
+      return 'Este email já está registado.';
+    }
+
+    return message || 'Não foi possível criar a conta.';
+  }
+
+  async handleLogin(form?: NgForm) {
+    if (this.loadingLogin || this.loadingSignUp) return;
+
+    this.loadingLogin = true;
+    this.limparMensagens();
+
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Preencha email e palavra-passe.';
       this.loadingLogin = false;
       return;
     }
 
-    this.loadingLogin = false;
-    await this.router.navigate(['/dashboard']);
+    try {
+      const { error } = await this.supabaseService.signIn(this.email.trim(), this.password);
+
+      if (error) {
+        this.errorMessage = this.obterMensagemErroLogin(error.message);
+        return;
+      }
+
+      await this.router.navigate(['/dashboard']);
+    } catch {
+      this.errorMessage = 'Ocorreu um erro ao tentar entrar.';
+    } finally {
+      this.loadingLogin = false;
+    }
   }
 
-  async handleSignUp() {
+  async handleSignUp(form?: NgForm) {
+    if (this.loadingLogin || this.loadingSignUp) return;
+
     this.loadingSignUp = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.limparMensagens();
 
-    const { error } = await this.supabaseService.signUp(
-      this.email,
-      this.password,
-      this.nomeCompleto
-    );
-
-    if (error) {
-      this.errorMessage = error.message;
+    if (!this.email || !this.password) {
+      this.errorMessage = 'Preencha email e palavra-passe para criar a conta.';
       this.loadingSignUp = false;
       return;
     }
 
-    this.loadingSignUp = false;
-    this.successMessage = 'Conta criada com sucesso! Agora pode clicar em "Entrar".';
+    try {
+      const { error } = await this.supabaseService.signUp(
+        this.email.trim(),
+        this.password,
+        this.nomeCompleto.trim()
+      );
+
+      if (error) {
+        this.errorMessage = this.obterMensagemErroRegisto(error.message);
+        return;
+      }
+
+      this.successMessage = 'Conta criada com sucesso! Agora pode clicar em "Entrar".';
+    } catch {
+      this.errorMessage = 'Ocorreu um erro ao criar a conta.';
+    } finally {
+      this.loadingSignUp = false;
+    }
   }
 
   usarDadosParaLogin() {
