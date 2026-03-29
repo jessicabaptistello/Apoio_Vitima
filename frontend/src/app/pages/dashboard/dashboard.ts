@@ -296,8 +296,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async fazerLogout(event: Event) {
     event.preventDefault();
-    await this.supabaseService.signOut();
-    await this.router.navigate(['/login']);
+
+    const confirmar = await this.abrirModalConfirmacao(
+      'Confirmar logout',
+      'Tem a certeza que deseja terminar a sessão?'
+    );
+
+    if (!confirmar) return;
+
+    const { error } = await this.supabaseService.signOut();
+
+    if (error) {
+      this.abrirModalAlerta('Erro no logout', error.message || 'Não foi possível terminar a sessão.');
+      return;
+    }
+
+    this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
+
+    setTimeout(async () => {
+      await this.router.navigate(['/login']);
+    }, 900);
   }
 
   logout(event: Event) {
