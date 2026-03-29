@@ -68,7 +68,7 @@
           <p class="descricao">{{ recurso.descricao }}</p>
           <p><strong>Contacto:</strong> {{ recurso.contacto }}</p>
           <p>
-            <strong>Website:</strong>
+            <strong>Website ou Email:</strong>
             <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
           </p>
 
@@ -91,45 +91,105 @@
           Pode sugerir um novo recurso para ser analisado. Após validação, ficará disponível no diretório.
         </p>
 
-        <input
-          type="text"
-          [(ngModel)]="novoRecurso.nome"
-          placeholder="Nome do recurso"
-        >
+        <form #recursoForm="ngForm" (ngSubmit)="sugerirNovoRecurso(recursoForm)" novalidate>
+          <input
+            type="text"
+            name="nome"
+            [(ngModel)]="novoRecurso.nome"
+            #nomeModel="ngModel"
+            placeholder="Nome do recurso"
+            required
+            minlength="3"
+          >
+          <small class="validation-error" *ngIf="novoRecurso.nome && novoRecurso.nome.length > 0 && novoRecurso.nome.length < 3">
+            O nome do recurso deve ter pelo menos 3 caracteres.
+          </small>
 
-        <input
-          type="text"
-          [(ngModel)]="novoRecurso.tipo"
-          placeholder="Tipo de apoio"
-        >
+          <input
+            type="text"
+            name="tipo"
+            [(ngModel)]="novoRecurso.tipo"
+            #tipoModel="ngModel"
+            placeholder="Tipo de apoio"
+            required
+            minlength="4"
+          >
+          <small class="validation-error" *ngIf="novoRecurso.tipo && novoRecurso.tipo.length > 0 && novoRecurso.tipo.length < 4">
+            O tipo de apoio deve ter pelo menos 4 caracteres.
+          </small>
 
-        <input
-          type="text"
-          [(ngModel)]="novoRecurso.contacto"
-          placeholder="Contacto"
-        >
+          <input
+            type="tel"
+            name="contacto"
+            [(ngModel)]="novoRecurso.contacto"
+            #contactoModel="ngModel"
+            placeholder="Contacto"
+            required
+            [pattern]="contactoPattern"
+            inputmode="numeric"
+            maxlength="15"
+          >
+          <small class="validation-error" *ngIf="novoRecurso.contacto && contactoModel.invalid">
+            O contacto deve conter apenas números e ter pelo menos 9 dígitos.
+          </small>
 
-        <input
-          type="text"
-          [(ngModel)]="novoRecurso.website"
-          placeholder="Website"
-        >
+          <input
+            type="text"
+            name="website"
+            [(ngModel)]="novoRecurso.website"
+            #websiteModel="ngModel"
+            placeholder="Website ou e-mail"
+            required
+          >
+          <small
+            class="validation-error"
+            *ngIf="novoRecurso.website && !websiteOuEmailValido(novoRecurso.website)"
+          >
+            Introduza um website ou email válido.
+          </small>
 
-        <input
-          type="text"
-          [(ngModel)]="novoRecurso.distrito"
-          placeholder="Distrito"
-        >
+          <input
+            type="text"
+            name="distrito"
+            [(ngModel)]="novoRecurso.distrito"
+            #distritoModel="ngModel"
+            placeholder="Distrito"
+            required
+          >
+          <small class="validation-error" *ngIf="!novoRecurso.distrito && distritoModel.touched">
+            O distrito é obrigatório.
+          </small>
 
-        <textarea
-          [(ngModel)]="novoRecurso.descricao"
-          placeholder="Descrição do recurso"
-        ></textarea>
+          <textarea
+            name="descricao"
+            [(ngModel)]="novoRecurso.descricao"
+            #descricaoModel="ngModel"
+            placeholder="Descrição do recurso"
+            required
+            minlength="10"
+          ></textarea>
+          <small class="validation-error" *ngIf="novoRecurso.descricao && novoRecurso.descricao.length > 0 && novoRecurso.descricao.length < 10">
+            A descrição deve ter pelo menos 10 caracteres.
+          </small>
 
-        <button class="btn-send" (click)="sugerirNovoRecurso()">
-          Enviar sugestão
-        </button>
+          <button class="btn-send" type="submit" [disabled]="enviandoSugestao">
+            {{ enviandoSugestao ? 'A enviar...' : 'Enviar sugestão' }}
+          </button>
+        </form>
       </div>
     </section>
   </main>
+</div>
+
+<div *ngIf="modalOpen" class="custom-modal-backdrop">
+  <div class="custom-modal">
+    <h3>{{ modalTitle }}</h3>
+    <p>{{ modalMessage }}</p>
+
+    <div class="custom-modal-actions">
+      <button type="button" class="btn-top" (click)="fecharModal()">
+        OK
+      </button>
+    </div>
+  </div>
 </div>

@@ -16,7 +16,7 @@
       {{ successMessage }}
     </div>
 
-    <form (submit)="$event.preventDefault()">
+    <form (submit)="$event.preventDefault()" novalidate>
       <div class="input-group">
         <label for="nome">Nome Completo (opcional)</label>
         <input
@@ -37,7 +37,13 @@
           [(ngModel)]="email"
           placeholder="exemplo@email.com"
           (input)="usarDadosParaLogin()"
+          #emailModel="ngModel"
+          required
+          email
         >
+        <small class="validation-error" *ngIf="email && emailModel.invalid">
+          Introduza um e-mail válido.
+        </small>
       </div>
 
       <div class="input-group">
@@ -49,7 +55,13 @@
           [(ngModel)]="password"
           placeholder="Sua senha"
           (input)="usarDadosParaLogin()"
+          #passwordModel="ngModel"
+          required
+          minlength="6"
         >
+        <small class="validation-error" *ngIf="password && password.length > 0 && password.length < 6">
+          A palavra-passe deve ter pelo menos 6 caracteres.
+        </small>
       </div>
 
       <div class="button-stack">
