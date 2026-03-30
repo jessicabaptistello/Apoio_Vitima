@@ -32,6 +32,7 @@
       <ul>
         <li><a (click)="setSection('info')">Homepage</a></li>
         <li><a (click)="setSection('direitos')">Direitos</a></li>
+        <li><a (click)="setSection('guia')">Guia de Ajuda</a></li>
         <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
 
         <li *ngIf="isAdmin">
@@ -84,6 +85,55 @@
           ou de risco imediato, a prioridade deve ser procurar ajuda através dos contactos
           de emergência e dos serviços especializados disponíveis.
         </p>
+      </div>
+    </section>
+
+    <section *ngIf="activeSection === 'guia'" class="centered-content">
+      <h2 class="section-title">Guia de Ajuda</h2>
+
+      <div class="guia-header card">
+        <h3>Informação rápida e organizada</h3>
+        <p>
+          Esta área reúne orientações iniciais sobre segurança, pedido de ajuda,
+          opções legais e apoio emocional. Clique em cada tópico para ver mais.
+        </p>
+      </div>
+
+      <div class="guia-list">
+        <article
+          *ngFor="let item of guiaAjuda"
+          class="guia-item card"
+          (click)="toggleGuia(item.id)"
+        >
+          <div class="guia-item-top">
+            <h3>{{ item.titulo }}</h3>
+            <span class="guia-toggle">
+              {{ guiaAberto === item.id ? '−' : '+' }}
+            </span>
+          </div>
+
+          <div *ngIf="guiaAberto === item.id" class="guia-item-content">
+            <p>{{ item.texto }}</p>
+
+            <div class="guia-actions">
+              <button
+                type="button"
+                class="editar"
+                (click)="executarAcaoGuia(item.acaoPrimaria); $event.stopPropagation()"
+              >
+                {{ item.acaoPrimaria }}
+              </button>
+
+              <button
+                type="button"
+                class="btn-outline"
+                (click)="executarAcaoGuia(item.acaoSecundaria); $event.stopPropagation()"
+              >
+                {{ item.acaoSecundaria }}
+              </button>
+            </div>
+          </div>
+        </article>
       </div>
     </section>
 

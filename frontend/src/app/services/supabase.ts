@@ -8,19 +8,19 @@ import { environment } from '../../environments/environment.development';
 export class SupabaseService {
   public supabase: SupabaseClient;
 
-constructor() {
-  this.supabase = createClient(
-    environment.supabaseUrl,
-    environment.supabaseKey,
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
+  constructor() {
+    this.supabase = createClient(
+      environment.supabaseUrl,
+      environment.supabaseKey,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
       }
-    }
-  );
-}
+    );
+  }
 
   private async executarComTimeout<T = any>(
     operacao: PromiseLike<T>,
@@ -102,14 +102,14 @@ constructor() {
   }
 
   async getUser(): Promise<User | null> {
-  try {
-    const session = await this.getSession();
-    return session?.user ?? null;
-  } catch (error) {
-    console.error('Erro ao obter utilizador:', error);
-    return null;
+    try {
+      const session = await this.getSession();
+      return session?.user ?? null;
+    } catch (error) {
+      console.error('Erro ao obter utilizador:', error);
+      return null;
+    }
   }
-}
 
   async getCurrentUser(): Promise<User | null> {
     return await this.getUser();
@@ -193,10 +193,13 @@ constructor() {
         data: response?.data ?? null,
         error: response?.error ?? null
       };
-    } catch (error) {
-  console.error('Erro ao obter utilizador:', error);
-  throw error;
-}
+    } catch (error: any) {
+      console.error('Erro inesperado no registo:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao criar conta.')
+      };
+    }
   }
 
   async signOut() {
@@ -267,13 +270,13 @@ constructor() {
 
       if (response?.error) {
         console.error('Erro ao obter pedidos:', response.error.message);
-        return [];
+        return null;
       }
 
       return response?.data || [];
     } catch (error: any) {
       console.error('Erro inesperado ao obter pedidos:', error);
-      return [];
+      return null;
     }
   }
 
@@ -294,13 +297,13 @@ constructor() {
 
       if (response?.error) {
         console.error('Erro ao carregar meus pedidos:', response.error.message);
-        return [];
+        return null;
       }
 
       return response?.data || [];
     } catch (error: any) {
       console.error('Erro inesperado ao carregar meus pedidos:', error);
-      return [];
+      return null;
     }
   }
 
@@ -399,14 +402,14 @@ constructor() {
 
       if (response?.error) {
         console.error('Erro ao obter recursos:', response.error.message);
-        return [];
+        return null;
       }
 
       const recursos = response?.data || [];
       return recursos.filter((recurso: any) => this.recursoEstaAprovado(recurso));
     } catch (error: any) {
       console.error('Erro inesperado ao obter recursos:', error);
-      return [];
+      return null;
     }
   }
 
@@ -426,14 +429,14 @@ constructor() {
 
       if (response?.error) {
         console.error('Erro ao obter recursos pendentes:', response.error.message);
-        return [];
+        return null;
       }
 
       const recursos = response?.data || [];
       return recursos.filter((recurso: any) => this.recursoEstaPendente(recurso));
     } catch (error: any) {
       console.error('Erro inesperado ao obter recursos pendentes:', error);
-      return [];
+      return null;
     }
   }
 
