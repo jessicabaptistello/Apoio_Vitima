@@ -143,18 +143,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const user = await this.supabaseService.getUser();
 
     if (!user) {
-      this.nomeutilizador = 'Utilizador';
-      this.isAdmin = false;
-      return;
-    }
+  return;
+}
 
     const metadata = user.user_metadata || {};
-    this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
-    this.isAdmin = (metadata['role'] ?? '') === 'admin';
+console.log('USER METADATA:', metadata);
+console.log('ROLE:', metadata['role']);
 
-    if (!this.novoPedido.email) {
-      this.novoPedido.email = user.email || '';
-    }
+this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
+this.isAdmin = (metadata['role'] ?? '') === 'admin';
+
+if (!this.novoPedido.email) {
+  this.novoPedido.email = user.email || '';
+}
   }
 
   async carregarPedidos() {
