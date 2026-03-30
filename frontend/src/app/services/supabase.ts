@@ -8,16 +8,23 @@ import { environment } from '../../environments/environment.development';
 export class SupabaseService {
   public supabase: SupabaseClient;
 
-  constructor() {
-    this.supabase = createClient(
-      environment.supabaseUrl,
-      environment.supabaseKey
-    );
-  }
+constructor() {
+  this.supabase = createClient(
+    environment.supabaseUrl,
+    environment.supabaseKey,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    }
+  );
+}
 
   private async executarComTimeout<T = any>(
     operacao: PromiseLike<T>,
-    timeoutMs: number = 8000
+    timeoutMs: number = 15000
   ): Promise<T> {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
@@ -95,18 +102,14 @@ export class SupabaseService {
   }
 
   async getUser(): Promise<User | null> {
-    try {
-      const response: any = await this.executarComTimeout(
-        this.supabase.auth.getUser(),
-        8000
-      );
-
-      return response?.data?.user ?? null;
-    } catch (error) {
-      console.error('Erro ao obter utilizador:', error);
-      return null;
-    }
+  try {
+    const session = await this.getSession();
+    return session?.user ?? null;
+  } catch (error) {
+    console.error('Erro ao obter utilizador:', error);
+    return null;
   }
+}
 
   async getCurrentUser(): Promise<User | null> {
     return await this.getUser();

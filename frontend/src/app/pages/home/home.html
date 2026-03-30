@@ -127,45 +127,44 @@
         Ver recursos disponíveis
       </button>
     </div>
+  </section>
 
-
-    <section class="help-section direitos-section">
-  <div class="section-header">
-    <h2>Conheça alguns dos seus direitos</h2>
-    <p>Clique para saber mais</p>
-  </div>
-
-  <div class="direitos-menu">
-
-    <div class="direito-item" (click)="toggleDireito('protecao')">
-      <h3>Direito à Proteção</h3>
-      <p *ngIf="direitoSelecionado === 'protecao'">
-        A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco ou ameaça.
-      </p>
+  <section class="help-section direitos-section">
+    <div class="section-header">
+      <h2>Conheça alguns dos seus direitos</h2>
+      <p>Clique para saber mais</p>
     </div>
 
-    <div class="direito-item" (click)="toggleDireito('informacao')">
-      <h3>Direito à Informação</h3>
-      <p *ngIf="direitoSelecionado === 'informacao'">
-        A vítima deverá poder receber informação clara sobre os seus direitos, os serviços disponíveis e os próximos passos.
-      </p>
-    </div>
+    <div class="direitos-menu">
 
-    <div class="direito-item" (click)="toggleDireito('juridico')">
-      <h3>Direito a Apoio Jurídico</h3>
-      <p *ngIf="direitoSelecionado === 'juridico'">
-        Poderá existir acesso a orientação jurídica para compreender a situação, os direitos e as opções legais disponíveis.
-      </p>
-    </div>
+      <div class="direito-item" (click)="toggleDireito('protecao')">
+        <h3>Direito à Proteção</h3>
+        <p *ngIf="direitoSelecionado === 'protecao'">
+          A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco ou ameaça.
+        </p>
+      </div>
 
-    <div class="direito-item" (click)="toggleDireito('encaminhamento')">
-      <h3>Direito ao Encaminhamento correto</h3>
-      <p *ngIf="direitoSelecionado === 'encaminhamento'">
-        A vítima pode ser encaminhada para serviços especializados que prestem apoio, proteção e acompanhamento adequado.
-      </p>
-    </div>
+      <div class="direito-item" (click)="toggleDireito('informacao')">
+        <h3>Direito à Informação</h3>
+        <p *ngIf="direitoSelecionado === 'informacao'">
+          A vítima deverá poder receber informação clara sobre os seus direitos, os serviços disponíveis e os próximos passos.
+        </p>
+      </div>
 
-  </div>
-</section> 
+      <div class="direito-item" (click)="toggleDireito('juridico')">
+        <h3>Direito a Apoio Jurídico</h3>
+        <p *ngIf="direitoSelecionado === 'juridico'">
+          Poderá existir acesso a orientação jurídica para compreender a situação, os direitos e as opções legais disponíveis.
+        </p>
+      </div>
+
+      <div class="direito-item" (click)="toggleDireito('encaminhamento')">
+        <h3>Direito ao Encaminhamento correto</h3>
+        <p *ngIf="direitoSelecionado === 'encaminhamento'">
+          A vítima pode ser encaminhada para serviços especializados que prestem apoio, proteção e acompanhamento adequado.
+        </p>
+      </div>
+
+    </div>
   </section>
 </div>
