@@ -78,6 +78,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 ];
 
+guiaAberto: string | null = null;
+
+guiaAjuda = [
+  {
+    id: 'perigo',
+    titulo: ' Estou em perigo',
+    texto: 'Se estiver em perigo imediato, ligue para o 112. Procure um local seguro e, se possível, contacte alguém de confiança. A sua segurança deve ser a prioridade.',
+    acaoPrimaria: 'Fazer pedido de ajuda',
+    acaoSecundaria: 'Ver recursos disponíveis'
+  },
+  {
+    id: 'pedido',
+    titulo: ' Como pedir ajuda',
+    texto: 'Pode utilizar o formulário de pedido de ajuda nesta plataforma ou procurar apoio através dos recursos disponíveis por distrito. Quanto mais clara for a descrição, mais fácil será o encaminhamento.',
+    acaoPrimaria: 'Ir para pedido',
+    acaoSecundaria: 'Ver recursos disponíveis'
+  },
+  {
+    id: 'legal',
+    titulo: ' O que posso fazer legalmente',
+    texto: 'Pode apresentar denúncia às autoridades competentes e procurar apoio jurídico para compreender melhor os seus direitos, os procedimentos e eventuais medidas de proteção.',
+    acaoPrimaria: 'Ver direitos',
+    acaoSecundaria: 'Fazer pedido de ajuda'
+  },
+  {
+    id: 'emocional',
+    titulo: ' Apoio emocional',
+    texto: 'O apoio emocional e psicológico pode ser essencial. Existem entidades e serviços especializados que podem acompanhar a vítima de forma segura e confidencial.',
+    acaoPrimaria: 'Ver recursos disponíveis',
+    acaoSecundaria: 'Fazer pedido de ajuda'
+  }
+];
+
   pedidoSubmitting: boolean = false;
   readonly contactoPattern = '^[0-9]{9,15}$';
 
@@ -173,27 +206,43 @@ if (!this.novoPedido.email) {
   }
 
   async carregarPedidos() {
-    const pedidos = await this.supabaseService.obterPedidos();
+  const pedidos = await this.supabaseService.obterPedidos();
 
-    this.pedidos = (pedidos || []).map((pedido: any) => ({
-      ...pedido,
-      status: pedido.status || 'Pendente'
-    }));
-
-    this.recursoSelecionadoPorPedido = {};
-
-    this.pedidos.forEach((pedido: any) => {
-      this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
-    });
+  if (!Array.isArray(pedidos)) {
+    return;
   }
+
+  this.pedidos = pedidos.map((pedido: any) => ({
+    ...pedido,
+    status: pedido.status || 'Pendente'
+  }));
+
+  this.recursoSelecionadoPorPedido = {};
+
+  this.pedidos.forEach((pedido: any) => {
+    this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
+  });
+}
 
   async carregarRecursosPendentes() {
-    this.recursosPendentes = await this.supabaseService.obterRecursosPendentes();
+  const recursos = await this.supabaseService.obterRecursosPendentes();
+
+  if (!Array.isArray(recursos)) {
+    return;
   }
 
+  this.recursosPendentes = recursos;
+}
+
   async carregarRecursosAprovados() {
-    this.recursosAprovados = await this.supabaseService.obterRecursos();
+  const recursos = await this.supabaseService.obterRecursos();
+
+  if (!Array.isArray(recursos)) {
+    return;
   }
+
+  this.recursosAprovados = recursos;
+}
 
   setSection(section: string) {
     this.activeSection = section;
@@ -499,6 +548,29 @@ if (!this.novoPedido.email) {
     this.cdr.detectChanges();
     this.abrirModalAlerta('Sucesso', 'Recurso rejeitado com sucesso!');
   }
+
+  toggleGuia(itemId: string) {
+  this.guiaAberto = this.guiaAberto === itemId ? null : itemId;
+}
+
+executarAcaoGuia(acao: string) {
+  if (acao === 'Fazer pedido de ajuda' || acao === 'Ir para pedido') {
+    this.setSection('info');
+    this.cdr.detectChanges();
+    return;
+  }
+
+  if (acao === 'Ver recursos disponíveis') {
+    this.router.navigate(['/apoio']);
+    return;
+  }
+
+  if (acao === 'Ver direitos') {
+    this.setSection('direitos');
+    this.cdr.detectChanges();
+    return;
+  }
+}
 
   getStatusClass(status: string): string {
     if (!status) return 'status-pendente';
