@@ -1,29 +1,29 @@
 <div class="dashboard-layout">
   <div class="top-actions">
     <button
-    type="button"
-    (click)="toggleDarkMode()"
-    class="top-action-btn theme-toggle-btn"
-  >
-    {{ isDarkMode ? '☀️' : '🌙' }}
-  </button>
+      type="button"
+      (click)="toggleDarkMode()"
+      class="top-action-btn theme-toggle-btn"
+    >
+      {{ isDarkMode ? '☀️' : '🌙' }}
+    </button>
 
-  <a
-    href="/login"
-    (click)="fazerLogout($event)"
-    class="top-action-btn"
-  >
-    LOGOUT
-  </a>
+    <a
+      href="/login"
+      (click)="fazerLogout($event)"
+      class="top-action-btn"
+    >
+      LOGOUT
+    </a>
 
-  <a
-    href="https://www.google.pt"
-    (click)="logout($event)"
-    class="top-action-btn"
-  >
-    SAÍDA RÁPIDA
-  </a>
-</div>
+    <a
+      href="https://www.google.pt"
+      (click)="saidaRapida($event)"
+      class="top-action-btn"
+    >
+      SAÍDA RÁPIDA
+    </a>
+  </div>
 
   <aside class="sidebar">
     <div class="sidebar-logo">Refúgio</div>
@@ -31,6 +31,7 @@
     <nav>
       <ul>
         <li><a (click)="setSection('info')">Homepage</a></li>
+        <li><a (click)="setSection('direitos')">Direitos</a></li>
         <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
 
         <li *ngIf="isAdmin">
@@ -56,6 +57,35 @@
       <h1>{{ nomeutilizador | saudacao }}</h1>
       <h4>Bem-vinda(o), a sua página de apoio.</h4>
     </header>
+
+    <section *ngIf="activeSection === 'direitos'" class="centered-content">
+      <h2 class="section-title">Direitos e Orientação</h2>
+
+      <div class="direitos-hero">
+        <span class="eyebrow">INFORMAÇÃO ESSENCIAL</span>
+        <h3>Conheça alguns dos seus direitos</h3>
+        <p>
+          Esta área reúne informação inicial e acessível sobre proteção, apoio jurídico,
+          informação e encaminhamento, de forma simples e organizada.
+        </p>
+      </div>
+
+      <div class="direitos-grid">
+        <article class="direito-card" *ngFor="let direito of direitosCards">
+          <h3>{{ direito.titulo }}</h3>
+          <p>{{ direito.texto }}</p>
+        </article>
+      </div>
+
+      <div class="direitos-extra card">
+        <h3>Importante</h3>
+        <p>
+          Esta secção tem caráter informativo e de orientação inicial. Em situações urgentes
+          ou de risco imediato, a prioridade deve ser procurar ajuda através dos contactos
+          de emergência e dos serviços especializados disponíveis.
+        </p>
+      </div>
+    </section>
 
     <section *ngIf="activeSection === 'info'" class="centered-content">
       <div class="form-container">
@@ -156,8 +186,6 @@
           </button>
         </form>
       </div>
-
-      
     </section>
 
     <section *ngIf="activeSection === 'meus-pedidos'" class="centered-content">

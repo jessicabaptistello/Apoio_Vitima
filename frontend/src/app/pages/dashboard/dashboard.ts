@@ -58,12 +58,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     'Concluído'
   ];
 
-  contatos = [
-    { nome: 'INEM', numero: '112', descricao: 'Emergencias Medicas' },
-    { nome: 'GNR / PSP', numero: '112', descricao: 'Seguranca Imediata' },
-    { nome: 'SNS 24', numero: '808242424', descricao: 'Apoio Medico' },
-    { nome: 'Apoio Vitima', numero: '800202148', descricao: 'Apoio Psicologico' }
-  ];
+
+  direitosCards = [
+  {
+    titulo: 'Direito à Proteção',
+    texto: 'A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco, ameaça ou vulnerabilidade.'
+  },
+  {
+    titulo: 'Direito à Informação',
+    texto: 'A vítima deverá poder receber informação clara sobre os seus direitos, os recursos disponíveis e os passos que poderá seguir.'
+  },
+  {
+    titulo: 'Direito a Apoio Jurídico',
+    texto: 'Poderá existir acesso a orientação jurídica para compreender melhor a situação, os direitos e as opções legais disponíveis.'
+  },
+  {
+    titulo: 'Direito a Encaminhamento',
+    texto: 'A vítima pode ser encaminhada para serviços especializados de apoio, proteção e acompanhamento adequado à sua situação.'
+  }
+];
 
   pedidoSubmitting: boolean = false;
   readonly contactoPattern = '^[0-9]{9,15}$';
@@ -73,6 +86,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   modalMessage: string = '';
   modalMode: 'alert' | 'confirm' = 'alert';
   private modalResolver: ((value: boolean) => void) | null = null;
+  
 
   constructor(
     private supabaseService: SupabaseService,
@@ -317,34 +331,33 @@ if (!this.novoPedido.email) {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
-  async fazerLogout(event: Event) {
-    event.preventDefault();
+ async fazerLogout(event: Event) {
+  event.preventDefault();
 
-    const confirmar = await this.abrirModalConfirmacao(
-      'Confirmar logout',
-      'Tem a certeza que deseja terminar a sessão?'
-    );
+  const confirmar = await this.abrirModalConfirmacao(
+    'Confirmar logout',
+    'Tem a certeza que deseja terminar a sessão?'
+  );
 
-    if (!confirmar) return;
+  if (!confirmar) return;
 
-    const { error } = await this.supabaseService.signOut();
-
-    if (error) {
-      this.abrirModalAlerta('Erro no logout', error.message || 'Não foi possível terminar a sessão.');
-      return;
-    }
-
-    this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
-
-    setTimeout(async () => {
-      await this.router.navigate(['/login']);
-    }, 900);
+  try {
+    await this.supabaseService.signOut();
+  } catch (error) {
+    console.error('Erro no logout:', error);
   }
 
-  logout(event: Event) {
-    event.preventDefault();
-    window.location.href = 'https://www.google.pt';
-  }
+  this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
+
+  setTimeout(async () => {
+    await this.router.navigate(['/login']);
+  }, 900);
+}
+
+ saidaRapida(event: Event) {
+  event.preventDefault();
+  window.location.replace('https://www.google.pt');
+}
 
   async apagarPedido(pedido: any) {
     if (!this.isAdmin) return;
