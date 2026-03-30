@@ -30,8 +30,8 @@
           </button>
         </div>
 
-      </div> 
-    </div> 
+      </div>
+    </div>
 
   </header>
 
@@ -63,6 +63,69 @@
         <h3>Linhas de Ajuda</h3>
         <p>Números e canais de apoio para situações urgentes ou necessidade imediata.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="help-section juridico-section">
+    <div class="section-header">
+      <h2>Assistente Jurídico</h2>
+      <p>
+        Orientação jurídica inicial sobre direitos, denúncia, proteção e apoio.
+      </p>
+    </div>
+
+    <div class="chat-atalhos">
+      <button type="button" class="atalho-btn" (click)="enviarMensagemRapida('Quais são os meus direitos?')">
+        Quais são os meus direitos?
+      </button>
+
+      <button type="button" class="atalho-btn" (click)="enviarMensagemRapida('Quero denunciar')">
+        Quero denunciar
+      </button>
+
+      <button type="button" class="atalho-btn" (click)="enviarMensagemRapida('Preciso de proteção')">
+        Preciso de proteção
+      </button>
+
+      <button type="button" class="atalho-btn" (click)="enviarMensagemRapida('Estou em perigo')">
+        Estou em perigo
+      </button>
+    </div>
+
+    <div class="chat-box">
+      <div
+        *ngFor="let msg of mensagensChat"
+        class="chat-msg"
+        [ngClass]="{
+          'user-msg': msg.autor === 'user',
+          'bot-msg': msg.autor === 'bot'
+        }"
+      >
+        {{ msg.texto }}
+      </div>
+    </div>
+
+    <div class="chat-input">
+      <input
+        type="text"
+        [(ngModel)]="novaMensagem"
+        placeholder="Escreva a sua dúvida jurídica..."
+        (keyup.enter)="enviarMensagem()"
+      />
+
+      <button type="button" class="btn-primary" (click)="enviarMensagem()">
+        Enviar
+      </button>
+    </div>
+
+    <div class="hero-buttons juridico-actions">
+      <button routerLink="/login" class="btn-primary">
+        Fazer pedido de ajuda
+      </button>
+
+      <button routerLink="/apoio" class="btn-secondary">
+        Ver recursos disponíveis
+      </button>
     </div>
   </section>
 </div>
