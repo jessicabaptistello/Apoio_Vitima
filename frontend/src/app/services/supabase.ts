@@ -190,13 +190,10 @@ export class SupabaseService {
         data: response?.data ?? null,
         error: response?.error ?? null
       };
-    } catch (error: any) {
-      console.error('Erro inesperado ao criar conta:', error);
-      return {
-        data: null,
-        error: this.mensagemErro(error, 'Erro ao criar conta.')
-      };
-    }
+    } catch (error) {
+  console.error('Erro ao obter utilizador:', error);
+  throw error;
+}
   }
 
   async signOut() {

@@ -1,26 +1,36 @@
 <div class="dashboard-layout">
+  <div class="top-actions">
+    <button
+    type="button"
+    (click)="toggleDarkMode()"
+    class="top-action-btn theme-toggle-btn"
+  >
+    {{ isDarkMode ? '☀️' : '🌙' }}
+  </button>
+
   <a
     href="/login"
     (click)="fazerLogout($event)"
-    class="quick-logout"
+    class="top-action-btn"
   >
-    LOG OUT
+    LOGOUT
   </a>
 
   <a
     href="https://www.google.pt"
     (click)="logout($event)"
-    class="quick-exit"
+    class="top-action-btn"
   >
     SAÍDA RÁPIDA
   </a>
+</div>
 
   <aside class="sidebar">
     <div class="sidebar-logo">Refúgio</div>
 
     <nav>
       <ul>
-        <li><a (click)="setSection('info')">Início / Contactos</a></li>
+        <li><a (click)="setSection('info')">Homepage</a></li>
         <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
 
         <li *ngIf="isAdmin">
@@ -147,15 +157,7 @@
         </form>
       </div>
 
-      <h2 class="section-title">Linhas de Apoio Imediato</h2>
-
-      <div class="cards-grid">
-        <div class="card" *ngFor="let c of contatos">
-          <h3>{{ c.nome }}</h3>
-          <p>{{ c.descricao }}</p>
-          <p>{{ c.numero }}</p>
-        </div>
-      </div>
+      
     </section>
 
     <section *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
