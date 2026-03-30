@@ -153,4 +153,14 @@ Depois, poderá procurar apoio através da plataforma.`;
   return this.gerarResposta(texto);
 }
 
+direitoSelecionado: string | null = null;
+
+toggleDireito(direito: string) {
+  if (this.direitoSelecionado === direito) {
+    this.direitoSelecionado = null;
+  } else {
+    this.direitoSelecionado = direito;
+  }
+}
+
 }
