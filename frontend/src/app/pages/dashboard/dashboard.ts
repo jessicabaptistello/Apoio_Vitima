@@ -12,10 +12,13 @@ import { SupabaseService } from '../../services/supabase';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
+
 export class DashboardComponent implements OnInit, OnDestroy {
   nomeutilizador: string = 'Utilizador';
   isAdmin: boolean = false;
   activeSection: string = 'info';
+
+  isDarkMode: boolean = false;
 
   pedidos: any[] = [];
   recursosPendentes: any[] = [];
@@ -78,6 +81,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      this.isDarkMode = true;
+      document.body.classList.add('dark-mode');
+    }
+
     await this.supabaseService.garantirSessaoPronta();
     await this.inicializarDashboard();
 
@@ -97,6 +106,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
 
     this.authSubscription = data.subscription;
+  }
+
+  toggleDarkMode(): void {
+    this.isDarkMode = !this.isDarkMode;
+
+    if (this.isDarkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+    this.cdr.detectChanges();
   }
 
   ngOnDestroy() {

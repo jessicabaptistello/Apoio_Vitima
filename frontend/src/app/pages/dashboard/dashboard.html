@@ -1,19 +1,29 @@
 <div class="dashboard-layout">
+  <div class="top-actions">
   <a
     href="/login"
     (click)="fazerLogout($event)"
-    class="quick-logout"
+    class="top-action-btn"
   >
-    LOG OUT
+    LOGOUT
   </a>
+
+  <button
+    type="button"
+    (click)="toggleDarkMode()"
+    class="top-action-btn theme-toggle-btn"
+  >
+    {{ isDarkMode ? '☀️' : '🌙' }}
+  </button>
 
   <a
     href="https://www.google.pt"
     (click)="logout($event)"
-    class="quick-exit"
+    class="top-action-btn"
   >
     SAÍDA RÁPIDA
   </a>
+</div>
 
   <aside class="sidebar">
     <div class="sidebar-logo">Refúgio</div>
