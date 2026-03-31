@@ -45,32 +45,52 @@ ng serve
 
 ---
 
-##  API Endpoints
+## API Endpoints
 
-### GET / RECURSOS E PEDIDOS
+### Recursos
 
-Lista todos os recursos
+- **GET /recursos**
+  - Lista todos os recursos
 
-### GET / RECURSOS POR ID 
+- **GET /recursos/:id**
+  - Obtém um recurso específico
 
-Obtém um recurso específico
+- **POST /recursos**
+  - Cria um novo recurso
+    
+  - Exemplo de body:
+```json
+{
+  "nome": "APAV",
+  "tipo": "Apoio psicológico",
+  "contacto": "800 202 148",
+  "distrito": "Lisboa"
+}
 
-### POST  / RECURSOS E ID 
+- **PATCH /recursos/:id**
+  - Atualiza um recurso existente
 
-Cria um novo recurso
+- **DELETE /recursos/:id**
+  - Remove um recurso
 
-### PATCH / RECURSOS E ID
-
-Atualiza um recurso
-
-### DELETE / RECURSOS E ID 
-
-Remove um recurso
-
-### GET / PEDIDOS APOS DELETE 
-
-Tenta obter um recurso específico após o delete deste 
 ---
+
+### Pedidos
+
+- **GET /pedidos**
+  - Lista todos os pedidos
+
+- **GET /pedidos/:id**
+  - Obtém um pedido específico
+
+- **POST /pedidos**
+  - Cria um novo pedido
+
+- **PATCH /pedidos/:id**
+  - Atualiza um pedido
+
+- **DELETE /pedidos/:id**
+  - Remove um pedido
 
 ## Base de Dados
 
@@ -84,6 +104,8 @@ Campos:
 * contacto
 * website
 * distrito
+* descricao
+* status
 
 Tabela: Pedidos 
 
@@ -91,54 +113,61 @@ Campos:
 
 * id
 * user_id
-* titulo
 * descricao
 * status
+* email
+* tipo_pedido
+* contacto
+* distrito
+* recurso_nome
+* recurso_contacto
+* recurso_website
+* mensagem_encaminhamento
 
 ---
 
 ## Testes com Postman para a tabela Recursos
 
-### GET todos os recursos
+### GET /recursos
 
 ![GET](./get-recursos-todos.png)
 
-### GET por ID
+### GET /recursos/:id
 
 ![GET by ID](./get-recursos-id.png)
 
-### POST criar recurso
+### POST /recursos
 
 ![POST](./post-recursos.png)
 
-### PATCH atualizar recurso
+### PATCH /recursos/:id
 
 ![PATCH](./patch-recursos.png)
 
-### DELETE recurso
+### DELETE /recursos/:id
 
 ![DELETE](./delete-recursos.png)
 
 ---
 ## Testes com Postman para a tabela Pedidos
 
-### GET todos os pedidos
+### GET /pedidos
 
 ![GET](./get.png)
 
-### GET por APÓS DELETE
+### GET /pedidos/:id
 
-![GET APÓS DELETE](./getaposdelete.png)
+![GET by ID](./getID.png)
 
-### POST criar pedido
+### POST /pedidos
 
 ![POST](./post.png)
 
-### PATCH atualizar pedido
+### PATCH /pedidos/:id
 
 ![PATCH](./patch.png)
 
-### DELETE pedido
+### DELETE /pedidos/:id
 
 ![DELETE](./delete.png)
 
