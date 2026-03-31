@@ -4,6 +4,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-blueviolet?logo=supabase&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-brightgreen?logo=docker&logoColor=white)
 [![Status do Site](https://img.shields.io/website?url=https%3A%2F%2Fapoio-vitima.onrender.com&label=Status&logo=render&color=46E3B7)](https://apoio-vitima.onrender.com)
+![Vercel Deploy](https://deploy-badge.vercel.app/vercel/reactions-demo)
 
 # Diretório de Apoio à Vítima
 
