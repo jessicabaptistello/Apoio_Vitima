@@ -49,16 +49,17 @@ ng serve
 
 ### Recursos
 
-- **GET /recursos**
-  - Lista todos os recursos
+**GET /recursos**  
+Lista todos os recursos
 
-- **GET /recursos/:id**
-  - Obtém um recurso específico
+**GET /recursos/:id**  
+Obtém um recurso específico
 
-- **POST /recursos**
-  - Cria um novo recurso
-    
-  - Exemplo de body:
+**POST /recursos**  
+Cria um novo recurso
+
+Exemplo de body:
+
 ```json
 {
   "nome": "APAV",
@@ -66,33 +67,41 @@ ng serve
   "contacto": "800 202 148",
   "distrito": "Lisboa"
 }
----
-```md
+```
 
-- **PATCH /recursos/:id**
-  - Atualiza um recurso existente
+**PATCH /recursos/:id**  
+Atualiza um recurso existente
 
-- **DELETE /recursos/:id**
-  - Remove um recurso
+**DELETE /recursos/:id**  
+Remove um recurso
 
 ---
 
 ### Pedidos
 
-- **GET /pedidos**
-  - Lista todos os pedidos
+**GET /pedidos**  
+Lista todos os pedidos
 
-- **GET /pedidos/:id**
-  - Obtém um pedido específico
+**GET /pedidos/:id**  
+Obtém um pedido específico
 
-- **POST /pedidos**
-  - Cria um novo pedido
+**POST /pedidos**  
+Cria um novo pedido
 
-- **PATCH /pedidos/:id**
-  - Atualiza um pedido
+Exemplo de body:
 
-- **DELETE /pedidos/:id**
-  - Remove um pedido
+```json
+{
+  "descricao": "Preciso de apoio psicológico",
+  "status": "Pendente"
+}
+```
+
+**PATCH /pedidos/:id**  
+Atualiza um pedido
+
+**DELETE /pedidos/:id**  
+Remove um pedido
 
 ## Base de Dados
 
