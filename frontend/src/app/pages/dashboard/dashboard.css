@@ -890,3 +890,16 @@ a {
 .guiao-card:hover {
   transform: translateY(-3px);
 }
+
+.invalid-field {
+  border: 1px solid #e53935 !important;
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.12);
+}
+
+.btn-send:disabled,
+.btn-login:disabled,
+.btn-register:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}

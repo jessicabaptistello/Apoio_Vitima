@@ -431,3 +431,11 @@
     font-size: 1.65rem;
   }
 }
+
+.btn-send:disabled,
+.btn-login:disabled,
+.btn-register:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}

@@ -64,21 +64,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
   direitosCards = [
     {
       titulo: 'Direito à Proteção',
-      texto: 'A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco, ameaça ou vulnerabilidade.'
+      texto: 'A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco, ameaça ou vulnerabilidade. (artigo 20 da lei 112/2009).'
     },
     {
       titulo: 'Direito à Informação',
-      texto: 'A vítima deverá poder receber informação clara sobre os seus direitos, os recursos disponíveis e os passos que poderá seguir.'
+      texto: 'A vítima deverá poder receber informação clara sobre os seus direitos, os recursos disponíveis e os passos que poderá seguir. (artigo 15 da lei 112/2009)'
     },
     {
       titulo: 'Direito a Apoio Jurídico',
-      texto: 'Poderá existir acesso a orientação jurídica para compreender melhor a situação, os direitos e as opções legais disponíveis.'
+      texto: 'Poderá existir acesso a orientação jurídica para compreender melhor a situação, os direitos e as opções legais disponíveis. (artigo 18 da lei 112/2009).'
     },
     {
       titulo: 'Direito a Encaminhamento',
-      texto: 'A vítima pode ser encaminhada para serviços especializados de apoio, proteção e acompanhamento adequado à sua situação.'
+      texto: 'A vítima pode ser encaminhada para serviços especializados de apoio, proteção e acompanhamento adequado à sua situação. (artigo 18 da lei 112/2009).'
     }
   ];
+
 
   guiaAberto: string | null = null;
 
@@ -392,27 +393,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async fazerLogout(event: Event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const confirmar = await this.abrirModalConfirmacao(
-      'Confirmar logout',
-      'Tem a certeza que deseja terminar a sessão?'
-    );
+  const confirmar = await this.abrirModalConfirmacao(
+    'Confirmar logout',
+    'Tem a certeza que deseja terminar a sessão?'
+  );
 
-    if (!confirmar) return;
+  if (!confirmar) return;
 
-    try {
-      await this.supabaseService.signOut();
-    } catch (error) {
-      console.error('Erro no logout:', error);
-    }
-
-    this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
-
-    setTimeout(async () => {
-      await this.router.navigate(['/login']);
-    }, 900);
+  try {
+    await this.supabaseService.signOut();
+  } catch (error) {
+    console.error('Erro no logout:', error);
   }
+
+  await this.router.navigate(['/login']);
+}
 
   saidaRapida(event: Event) {
     event.preventDefault();
