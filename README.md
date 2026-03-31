@@ -66,6 +66,8 @@ ng serve
   "contacto": "800 202 148",
   "distrito": "Lisboa"
 }
+---
+```md
 
 - **PATCH /recursos/:id**
   - Atualiza um recurso existente
