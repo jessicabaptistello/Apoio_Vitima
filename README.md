@@ -177,8 +177,24 @@ ng teste
 
 ---
 
+## Decisão de Design
+
+A aplicação foi estruturada com base em duas entidades principais: **recursos** e **pedidos**.
+
+Os **recursos** representam organizações, associações e linhas de apoio disponíveis, enquanto os **pedidos** representam situações de ajuda criadas pelos utilizadores.
+
+Esta separação permite:
+- organizar melhor a informação
+- facilitar a gestão dos dados
+- permitir um fluxo de encaminhamento entre pedidos e recursos
+
+Além disso, foi utilizada a plataforma Supabase para gestão de base de dados e autenticação, permitindo simplificar o desenvolvimento e garantir segurança na gestão de utilizadores.
+
+---
+
 ##  Estado do Projeto
 
 Backend funcional com deploy automatico no Render: https://apoio-vitima.onrender.com
 
 Frontend com deploy automatico no Vercel: https://apoio-vitima.vercel.app/
+
