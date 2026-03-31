@@ -12,7 +12,6 @@ import { SupabaseService } from '../../services/supabase';
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.css']
 })
-
 export class DashboardComponent implements OnInit, OnDestroy {
   nomeutilizador: string = 'Utilizador';
   isAdmin: boolean = false;
@@ -27,6 +26,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private authSubscription: any;
 
   recursoSelecionadoPorPedido: { [key: number]: number | null } = {};
+
+  pedidoEmEdicaoId: number | null = null;
+  pedidoEditando: any = null;
+  pedidoEditandoSubmitting: boolean = false;
 
   novoPedido = {
     email: '',
@@ -58,58 +61,57 @@ export class DashboardComponent implements OnInit, OnDestroy {
     'Concluído'
   ];
 
-
   direitosCards = [
-  {
-    titulo: 'Direito à Proteção',
-    texto: 'A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco, ameaça ou vulnerabilidade.'
-  },
-  {
-    titulo: 'Direito à Informação',
-    texto: 'A vítima deverá poder receber informação clara sobre os seus direitos, os recursos disponíveis e os passos que poderá seguir.'
-  },
-  {
-    titulo: 'Direito a Apoio Jurídico',
-    texto: 'Poderá existir acesso a orientação jurídica para compreender melhor a situação, os direitos e as opções legais disponíveis.'
-  },
-  {
-    titulo: 'Direito a Encaminhamento',
-    texto: 'A vítima pode ser encaminhada para serviços especializados de apoio, proteção e acompanhamento adequado à sua situação.'
-  }
-];
+    {
+      titulo: 'Direito à Proteção',
+      texto: 'A vítima poderá ter direito a medidas de proteção adequadas à sua segurança, especialmente em situações de risco, ameaça ou vulnerabilidade.'
+    },
+    {
+      titulo: 'Direito à Informação',
+      texto: 'A vítima deverá poder receber informação clara sobre os seus direitos, os recursos disponíveis e os passos que poderá seguir.'
+    },
+    {
+      titulo: 'Direito a Apoio Jurídico',
+      texto: 'Poderá existir acesso a orientação jurídica para compreender melhor a situação, os direitos e as opções legais disponíveis.'
+    },
+    {
+      titulo: 'Direito a Encaminhamento',
+      texto: 'A vítima pode ser encaminhada para serviços especializados de apoio, proteção e acompanhamento adequado à sua situação.'
+    }
+  ];
 
-guiaAberto: string | null = null;
+  guiaAberto: string | null = null;
 
-guiaAjuda = [
-  {
-    id: 'perigo',
-    titulo: ' Estou em perigo',
-    texto: 'Se estiver em perigo imediato, ligue para o 112. Procure um local seguro e, se possível, contacte alguém de confiança. A sua segurança deve ser a prioridade.',
-    acaoPrimaria: 'Fazer pedido de ajuda',
-    acaoSecundaria: 'Ver recursos disponíveis'
-  },
-  {
-    id: 'pedido',
-    titulo: ' Como pedir ajuda',
-    texto: 'Pode utilizar o formulário de pedido de ajuda nesta plataforma ou procurar apoio através dos recursos disponíveis por distrito. Quanto mais clara for a descrição, mais fácil será o encaminhamento.',
-    acaoPrimaria: 'Ir para pedido',
-    acaoSecundaria: 'Ver recursos disponíveis'
-  },
-  {
-    id: 'legal',
-    titulo: ' O que posso fazer legalmente',
-    texto: 'Pode apresentar denúncia às autoridades competentes e procurar apoio jurídico para compreender melhor os seus direitos, os procedimentos e eventuais medidas de proteção.',
-    acaoPrimaria: 'Ver direitos',
-    acaoSecundaria: 'Fazer pedido de ajuda'
-  },
-  {
-    id: 'emocional',
-    titulo: ' Apoio emocional',
-    texto: 'O apoio emocional e psicológico pode ser essencial. Existem entidades e serviços especializados que podem acompanhar a vítima de forma segura e confidencial.',
-    acaoPrimaria: 'Ver recursos disponíveis',
-    acaoSecundaria: 'Fazer pedido de ajuda'
-  }
-];
+  guiaAjuda = [
+    {
+      id: 'perigo',
+      titulo: ' Estou em perigo',
+      texto: 'Se estiver em perigo imediato, ligue para o 112. Procure um local seguro e, se possível, contacte alguém de confiança. A sua segurança deve ser a prioridade.',
+      acaoPrimaria: 'Fazer pedido de ajuda',
+      acaoSecundaria: 'Ver recursos disponíveis'
+    },
+    {
+      id: 'pedido',
+      titulo: ' Como pedir ajuda',
+      texto: 'Pode utilizar o formulário de pedido de ajuda nesta plataforma ou procurar apoio através dos recursos disponíveis por distrito. Quanto mais clara for a descrição, mais fácil será o encaminhamento.',
+      acaoPrimaria: 'Ir para pedido',
+      acaoSecundaria: 'Ver recursos disponíveis'
+    },
+    {
+      id: 'legal',
+      titulo: ' O que posso fazer legalmente',
+      texto: 'Pode apresentar denúncia às autoridades competentes e procurar apoio jurídico para compreender melhor os seus direitos, os procedimentos e eventuais medidas de proteção.',
+      acaoPrimaria: 'Ver direitos',
+      acaoSecundaria: 'Fazer pedido de ajuda'
+    },
+    {
+      id: 'emocional',
+      titulo: ' Apoio emocional',
+      texto: 'O apoio emocional e psicológico pode ser essencial. Existem entidades e serviços especializados que podem acompanhar a vítima de forma segura e confidencial.',
+      acaoPrimaria: 'Ver recursos disponíveis',
+      acaoSecundaria: 'Fazer pedido de ajuda'
+    }
+  ];
 
   pedidoSubmitting: boolean = false;
   readonly contactoPattern = '^[0-9]{9,15}$';
@@ -119,7 +121,6 @@ guiaAjuda = [
   modalMessage: string = '';
   modalMode: 'alert' | 'confirm' = 'alert';
   private modalResolver: ((value: boolean) => void) | null = null;
-  
 
   constructor(
     private supabaseService: SupabaseService,
@@ -147,6 +148,7 @@ guiaAjuda = [
         this.recursosPendentes = [];
         this.recursosAprovados = [];
         this.recursoSelecionadoPorPedido = {};
+        this.cancelarEdicaoPedido(false);
       }
 
       this.cdr.detectChanges();
@@ -165,6 +167,7 @@ guiaAjuda = [
       document.body.classList.remove('dark-mode');
       localStorage.setItem('theme', 'light');
     }
+
     this.cdr.detectChanges();
   }
 
@@ -190,59 +193,67 @@ guiaAjuda = [
     const user = await this.supabaseService.getUser();
 
     if (!user) {
-  return;
-}
+      return;
+    }
 
     const metadata = user.user_metadata || {};
-console.log('USER METADATA:', metadata);
-console.log('ROLE:', metadata['role']);
+    console.log('USER METADATA:', metadata);
+    console.log('ROLE:', metadata['role']);
 
-this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
-this.isAdmin = (metadata['role'] ?? '') === 'admin';
+    this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
+    this.isAdmin = (metadata['role'] ?? '') === 'admin';
 
-if (!this.novoPedido.email) {
-  this.novoPedido.email = user.email || '';
-}
+    if (!this.novoPedido.email) {
+      this.novoPedido.email = user.email || '';
+    }
   }
 
   async carregarPedidos() {
-  const pedidos = await this.supabaseService.obterPedidos();
+    const pedidos = await this.supabaseService.obterPedidos();
 
-  if (!Array.isArray(pedidos)) {
-    return;
+    if (!Array.isArray(pedidos)) {
+      return;
+    }
+
+    this.pedidos = pedidos.map((pedido: any) => ({
+      ...pedido,
+      status: pedido.status || 'Pendente'
+    }));
+
+    this.recursoSelecionadoPorPedido = {};
+
+    this.pedidos.forEach((pedido: any) => {
+      this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
+    });
+
+    if (this.pedidoEmEdicaoId) {
+      const pedidoAtualizado = this.pedidos.find((p: any) => p.id === this.pedidoEmEdicaoId);
+
+      if (!pedidoAtualizado || !this.podeEditarPedido(pedidoAtualizado)) {
+        this.cancelarEdicaoPedido(false);
+      }
+    }
   }
-
-  this.pedidos = pedidos.map((pedido: any) => ({
-    ...pedido,
-    status: pedido.status || 'Pendente'
-  }));
-
-  this.recursoSelecionadoPorPedido = {};
-
-  this.pedidos.forEach((pedido: any) => {
-    this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
-  });
-}
 
   async carregarRecursosPendentes() {
-  const recursos = await this.supabaseService.obterRecursosPendentes();
+    const recursos = await this.supabaseService.obterRecursosPendentes();
 
-  if (!Array.isArray(recursos)) {
-    return;
+    if (!Array.isArray(recursos)) {
+      return;
+    }
+
+    this.recursosPendentes = recursos;
   }
-
-  this.recursosPendentes = recursos;
-}
 
   async carregarRecursosAprovados() {
-  const recursos = await this.supabaseService.obterRecursos();
+    const recursos = await this.supabaseService.obterRecursos();
 
-  if (!Array.isArray(recursos)) {
-    return;
+    if (!Array.isArray(recursos)) {
+      return;
+    }
+
+    this.recursosAprovados = recursos;
   }
-
-  this.recursosAprovados = recursos;
-}
 
   setSection(section: string) {
     this.activeSection = section;
@@ -380,33 +391,130 @@ if (!this.novoPedido.email) {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
- async fazerLogout(event: Event) {
-  event.preventDefault();
+  async fazerLogout(event: Event) {
+    event.preventDefault();
 
-  const confirmar = await this.abrirModalConfirmacao(
-    'Confirmar logout',
-    'Tem a certeza que deseja terminar a sessão?'
-  );
+    const confirmar = await this.abrirModalConfirmacao(
+      'Confirmar logout',
+      'Tem a certeza que deseja terminar a sessão?'
+    );
 
-  if (!confirmar) return;
+    if (!confirmar) return;
 
-  try {
-    await this.supabaseService.signOut();
-  } catch (error) {
-    console.error('Erro no logout:', error);
+    try {
+      await this.supabaseService.signOut();
+    } catch (error) {
+      console.error('Erro no logout:', error);
+    }
+
+    this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
+
+    setTimeout(async () => {
+      await this.router.navigate(['/login']);
+    }, 900);
   }
 
-  this.abrirModalAlerta('Logout efetuado', 'Sessão terminada com sucesso.');
+  saidaRapida(event: Event) {
+    event.preventDefault();
+    window.location.replace('https://www.google.pt');
+  }
 
-  setTimeout(async () => {
-    await this.router.navigate(['/login']);
-  }, 900);
-}
+  podeEditarPedido(pedido: any): boolean {
+    if (!pedido) return false;
+    if (this.isAdmin) return false;
 
- saidaRapida(event: Event) {
-  event.preventDefault();
-  window.location.replace('https://www.google.pt');
-}
+    return (pedido.status || '').trim().toLowerCase() === 'pendente';
+  }
+
+  iniciarEdicaoPedido(pedido: any) {
+    if (!this.podeEditarPedido(pedido)) return;
+
+    this.pedidoEmEdicaoId = pedido.id;
+    this.pedidoEditando = {
+      id: pedido.id,
+      email: pedido.email || '',
+      tipo_pedido: pedido.tipo_pedido || '',
+      contacto: pedido.contacto || '',
+      distrito: pedido.distrito || '',
+      descricao: pedido.descricao || ''
+    };
+
+    this.cdr.detectChanges();
+  }
+
+  cancelarEdicaoPedido(confirmarCancelamento: boolean = true) {
+    if (confirmarCancelamento && this.pedidoEmEdicaoId) {
+      this.abrirModalAlerta('Edição cancelada', 'As alterações não guardadas foram descartadas.');
+    }
+
+    this.pedidoEmEdicaoId = null;
+    this.pedidoEditando = null;
+    this.pedidoEditandoSubmitting = false;
+    this.cdr.detectChanges();
+  }
+
+  async guardarEdicaoPedido() {
+    if (!this.pedidoEditando || !this.pedidoEmEdicaoId) return;
+    if (this.pedidoEditandoSubmitting) return;
+
+    const emailLimpo = (this.pedidoEditando.email || '').trim();
+    const tipoLimpo = (this.pedidoEditando.tipo_pedido || '').trim();
+    const contactoLimpo = (this.pedidoEditando.contacto || '').trim();
+    const distritoLimpo = (this.pedidoEditando.distrito || '').trim();
+    const descricaoLimpa = (this.pedidoEditando.descricao || '').trim();
+
+    if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distritoLimpo || !descricaoLimpa) {
+      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+      this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
+      return;
+    }
+
+    if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
+      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter entre 9 e 15 dígitos.');
+      return;
+    }
+
+    if (descricaoLimpa.length < 10) {
+      this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
+      return;
+    }
+
+    const pedidoOriginal = this.pedidos.find((p: any) => p.id === this.pedidoEmEdicaoId);
+
+    if (!pedidoOriginal || !this.podeEditarPedido(pedidoOriginal)) {
+      this.abrirModalAlerta('Edição não permitida', 'Este pedido já não pode ser editado.');
+      this.cancelarEdicaoPedido(false);
+      return;
+    }
+
+    this.pedidoEditandoSubmitting = true;
+
+    try {
+      const { error } = await this.supabaseService.atualizarPedidoUtilizador(this.pedidoEmEdicaoId, {
+        email: emailLimpo,
+        tipo_pedido: tipoLimpo,
+        contacto: contactoLimpo,
+        distrito: distritoLimpo,
+        descricao: descricaoLimpa
+      });
+
+      if (error) {
+        this.abrirModalAlerta('Erro ao editar pedido', error.message);
+        return;
+      }
+
+      await this.carregarPedidos();
+      this.cancelarEdicaoPedido(false);
+      this.abrirModalAlerta('Sucesso', 'Pedido atualizado com sucesso!');
+    } finally {
+      this.pedidoEditandoSubmitting = false;
+      this.cdr.detectChanges();
+    }
+  }
 
   async apagarPedido(pedido: any) {
     if (!this.isAdmin) return;
@@ -550,27 +658,27 @@ if (!this.novoPedido.email) {
   }
 
   toggleGuia(itemId: string) {
-  this.guiaAberto = this.guiaAberto === itemId ? null : itemId;
-}
-
-executarAcaoGuia(acao: string) {
-  if (acao === 'Fazer pedido de ajuda' || acao === 'Ir para pedido') {
-    this.setSection('info');
-    this.cdr.detectChanges();
-    return;
+    this.guiaAberto = this.guiaAberto === itemId ? null : itemId;
   }
 
-  if (acao === 'Ver recursos disponíveis') {
-    this.router.navigate(['/apoio']);
-    return;
-  }
+  executarAcaoGuia(acao: string) {
+    if (acao === 'Fazer pedido de ajuda' || acao === 'Ir para pedido') {
+      this.setSection('info');
+      this.cdr.detectChanges();
+      return;
+    }
 
-  if (acao === 'Ver direitos') {
-    this.setSection('direitos');
-    this.cdr.detectChanges();
-    return;
+    if (acao === 'Ver recursos disponíveis') {
+      this.router.navigate(['/apoio']);
+      return;
+    }
+
+    if (acao === 'Ver direitos') {
+      this.setSection('direitos');
+      this.cdr.detectChanges();
+      return;
+    }
   }
-}
 
   getStatusClass(status: string): string {
     if (!status) return 'status-pendente';

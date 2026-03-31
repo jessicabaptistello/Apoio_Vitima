@@ -251,39 +251,125 @@
             <div class="pedido-info">
               <span class="titulo">{{ pedido.tipo_pedido }}</span>
 
-              <div class="pedido-details">
-                <p><strong>Email:</strong> {{ pedido.email }}</p>
-                <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
-                <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
-              </div>
+              <div *ngIf="pedidoEmEdicaoId !== pedido.id; else modoEdicaoPedido">
+                <div class="pedido-details">
+                  <p><strong>Email:</strong> {{ pedido.email }}</p>
+                  <p><strong>Contacto:</strong> {{ pedido.contacto }}</p>
+                  <p><strong>Distrito:</strong> {{ pedido.distrito }}</p>
+                </div>
 
-              <p class="descricao">{{ pedido.descricao }}</p>
+                <p class="descricao">{{ pedido.descricao }}</p>
 
-              <div *ngIf="pedido.recurso_nome" class="pedido-details recurso-box">
-                <p><strong>Encaminhado para:</strong> {{ pedido.recurso_nome }}</p>
-                <p><strong>Contacto do recurso:</strong> {{ pedido.recurso_contacto }}</p>
+                <div *ngIf="pedido.recurso_nome" class="pedido-details recurso-box">
+                  <p><strong>Encaminhado para:</strong> {{ pedido.recurso_nome }}</p>
+                  <p><strong>Contacto do recurso:</strong> {{ pedido.recurso_contacto }}</p>
 
-                <p *ngIf="pedido.recurso_website">
-                  <strong>Website:</strong>
-                  <a [href]="pedido.recurso_website" target="_blank">
-                    {{ pedido.recurso_website }}
-                  </a>
-                </p>
+                  <p *ngIf="pedido.recurso_website">
+                    <strong>Website:</strong>
+                    <a [href]="pedido.recurso_website" target="_blank">
+                      {{ pedido.recurso_website }}
+                    </a>
+                  </p>
 
-                <p *ngIf="pedido.mensagem_encaminhamento">
-                  <strong>Mensagem:</strong> {{ pedido.mensagem_encaminhamento }}
-                </p>
+                  <p *ngIf="pedido.mensagem_encaminhamento">
+                    <strong>Mensagem:</strong> {{ pedido.mensagem_encaminhamento }}
+                  </p>
 
-                <div *ngIf="pedido.mensagem_encaminhamento" class="pedido-actions inline-actions">
-                  <a [href]="obterLinkEmailSimulado(pedido)" class="btn-outline">
-                    Preparar email
-                  </a>
+                  <div *ngIf="pedido.mensagem_encaminhamento" class="pedido-actions inline-actions">
+                    <a [href]="obterLinkEmailSimulado(pedido)" class="btn-outline">
+                      Preparar email
+                    </a>
 
-                  <button type="button" class="editar" (click)="verMensagemEmail(pedido)">
-                    Ver mensagem
+                    <button type="button" class="editar" (click)="verMensagemEmail(pedido)">
+                      Ver mensagem
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pedido-actions" *ngIf="podeEditarPedido(pedido)">
+                  <button type="button" class="editar" (click)="iniciarEdicaoPedido(pedido)">
+                    Editar
                   </button>
                 </div>
               </div>
+
+              <ng-template #modoEdicaoPedido>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label>Email</label>
+                    <input
+                      type="email"
+                      name="editar_email_{{ pedido.id }}"
+                      [(ngModel)]="pedidoEditando.email"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Tipo de Pedido</label>
+                    <select
+                      name="editar_tipo_{{ pedido.id }}"
+                      [(ngModel)]="pedidoEditando.tipo_pedido"
+                    >
+                      <option value="">Selecione</option>
+                      <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                        {{ tipo }}
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label>Contacto</label>
+                    <input
+                      type="tel"
+                      name="editar_contacto_{{ pedido.id }}"
+                      [(ngModel)]="pedidoEditando.contacto"
+                      inputmode="numeric"
+                      maxlength="15"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label>Distrito</label>
+                    <select
+                      name="editar_distrito_{{ pedido.id }}"
+                      [(ngModel)]="pedidoEditando.distrito"
+                    >
+                      <option value="">Selecione</option>
+                      <option *ngFor="let distrito of distritos" [value]="distrito">
+                        {{ distrito }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group descricao-group">
+                  <label>Descrição</label>
+                  <textarea
+                    name="editar_descricao_{{ pedido.id }}"
+                    [(ngModel)]="pedidoEditando.descricao"
+                  ></textarea>
+                </div>
+
+                <div class="pedido-actions">
+                  <button
+                    type="button"
+                    class="editar"
+                    (click)="guardarEdicaoPedido()"
+                    [disabled]="pedidoEditandoSubmitting"
+                  >
+                    {{ pedidoEditandoSubmitting ? 'A guardar...' : 'Guardar alterações' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-outline"
+                    (click)="cancelarEdicaoPedido()"
+                    [disabled]="pedidoEditandoSubmitting"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </ng-template>
             </div>
 
             <div class="pedido-meta">

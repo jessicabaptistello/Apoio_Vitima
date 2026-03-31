@@ -229,8 +229,18 @@ export class SupabaseService {
     [key: string]: any;
   }) {
     try {
+      const user = await this.getUser();
+
+      if (!user) {
+        return {
+          data: null,
+          error: { message: 'Utilizador não autenticado.' }
+        };
+      }
+
       const payload: any = {
-        ...dados
+        ...dados,
+        user_id: user.id
       };
 
       if (!payload.status) {
@@ -260,13 +270,25 @@ export class SupabaseService {
 
   async obterPedidos() {
     try {
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        8000
-      );
+      const user = await this.getUser();
+
+      if (!user) {
+        return [];
+      }
+
+      const metadata = user.user_metadata || {};
+      const isAdmin = (metadata['role'] ?? '') === 'admin';
+
+      let query = this.supabase
+        .from('pedidos')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+      }
+
+      const response: any = await this.executarComTimeout(query, 8000);
 
       if (response?.error) {
         console.error('Erro ao obter pedidos:', response.error.message);
@@ -348,6 +370,56 @@ export class SupabaseService {
       return {
         data: null,
         error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
+      };
+    }
+  }
+
+  async atualizarPedidoUtilizador(
+    pedidoId: number,
+    dadosAtualizados: {
+      email: string;
+      tipo_pedido: string;
+      contacto: string;
+      distrito: string;
+      descricao: string;
+    }
+  ) {
+    try {
+      const user = await this.getUser();
+
+      if (!user) {
+        return {
+          data: null,
+          error: new Error('Utilizador não autenticado.')
+        };
+      }
+
+      const response: any = await this.executarComTimeout(
+        this.supabase
+          .from('pedidos')
+          .update({
+            email: dadosAtualizados.email,
+            tipo_pedido: dadosAtualizados.tipo_pedido,
+            contacto: dadosAtualizados.contacto,
+            distrito: dadosAtualizados.distrito,
+            descricao: dadosAtualizados.descricao
+          })
+          .eq('id', pedidoId)
+          .eq('user_id', user.id)
+          .eq('status', 'Pendente')
+          .select(),
+        8000
+      );
+
+      return {
+        data: response?.data ?? null,
+        error: response?.error ?? null
+      };
+    } catch (error: any) {
+      console.error('Erro inesperado ao atualizar pedido do utilizador:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error : new Error('Erro ao atualizar pedido.')
       };
     }
   }
