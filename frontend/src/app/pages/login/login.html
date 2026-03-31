@@ -16,7 +16,7 @@
       {{ successMessage }}
     </div>
 
-    <form (submit)="$event.preventDefault()" novalidate>
+    <form #loginForm="ngForm" (submit)="$event.preventDefault()" novalidate>
       <div class="input-group">
         <label for="nome">Nome Completo (opcional)</label>
         <input
@@ -69,7 +69,7 @@
         <button
           type="button"
           (click)="handleLogin()"
-          [disabled]="loadingLogin"
+          [disabled]="loadingLogin || loginForm.invalid"
           class="btn-login"
         >
           {{ loadingLogin ? 'A entrar...' : 'Entrar' }}
@@ -78,7 +78,7 @@
         <button
           type="button"
           (click)="handleSignUp()"
-          [disabled]="loadingSignUp"
+          [disabled]="loadingSignUp || loginForm.invalid"
           class="btn-register"
         >
           {{ loadingSignUp ? 'A criar conta...' : 'Criar nova conta' }}

@@ -100,9 +100,10 @@
             placeholder="Nome do recurso"
             required
             minlength="3"
+            [class.invalid-field]="nomeModel.invalid && (nomeModel.touched || recursoForm.submitted)"
           >
-          <small class="validation-error" *ngIf="novoRecurso.nome && novoRecurso.nome.length > 0 && novoRecurso.nome.length < 3">
-            O nome do recurso deve ter pelo menos 3 caracteres.
+          <small class="validation-error" *ngIf="nomeModel.invalid && (nomeModel.touched || recursoForm.submitted)">
+            O nome do recurso é obrigatório e deve ter pelo menos 3 caracteres.
           </small>
 
           <input
@@ -113,9 +114,10 @@
             placeholder="Tipo de apoio"
             required
             minlength="4"
+            [class.invalid-field]="tipoModel.invalid && (tipoModel.touched || recursoForm.submitted)"
           >
-          <small class="validation-error" *ngIf="novoRecurso.tipo && novoRecurso.tipo.length > 0 && novoRecurso.tipo.length < 4">
-            O tipo de apoio deve ter pelo menos 4 caracteres.
+          <small class="validation-error" *ngIf="tipoModel.invalid && (tipoModel.touched || recursoForm.submitted)">
+            O tipo de apoio é obrigatório e deve ter pelo menos 4 caracteres.
           </small>
 
           <input
@@ -128,9 +130,10 @@
             [pattern]="contactoPattern"
             inputmode="numeric"
             maxlength="15"
+            [class.invalid-field]="contactoModel.invalid && (contactoModel.touched || recursoForm.submitted)"
           >
-          <small class="validation-error" *ngIf="novoRecurso.contacto && contactoModel.invalid">
-            O contacto deve conter apenas números e ter pelo menos 9 dígitos.
+          <small class="validation-error" *ngIf="contactoModel.invalid && (contactoModel.touched || recursoForm.submitted)">
+            O contacto é obrigatório e deve conter apenas números, com pelo menos 9 dígitos.
           </small>
 
           <input
@@ -140,12 +143,13 @@
             #websiteModel="ngModel"
             placeholder="Website ou e-mail"
             required
+            [class.invalid-field]="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.touched || recursoForm.submitted)"
           >
           <small
             class="validation-error"
-            *ngIf="novoRecurso.website && !websiteOuEmailValido(novoRecurso.website)"
+            *ngIf="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.touched || recursoForm.submitted)"
           >
-            Introduza um website ou email válido.
+            O website ou email é obrigatório e deve ser válido.
           </small>
 
           <input
@@ -155,8 +159,9 @@
             #distritoModel="ngModel"
             placeholder="Distrito"
             required
+            [class.invalid-field]="distritoModel.invalid && (distritoModel.touched || recursoForm.submitted)"
           >
-          <small class="validation-error" *ngIf="!novoRecurso.distrito && distritoModel.touched">
+          <small class="validation-error" *ngIf="distritoModel.invalid && (distritoModel.touched || recursoForm.submitted)">
             O distrito é obrigatório.
           </small>
 
@@ -167,12 +172,17 @@
             placeholder="Descrição do recurso"
             required
             minlength="10"
+            [class.invalid-field]="descricaoModel.invalid && (descricaoModel.touched || recursoForm.submitted)"
           ></textarea>
-          <small class="validation-error" *ngIf="novoRecurso.descricao && novoRecurso.descricao.length > 0 && novoRecurso.descricao.length < 10">
-            A descrição deve ter pelo menos 10 caracteres.
+          <small class="validation-error" *ngIf="descricaoModel.invalid && (descricaoModel.touched || recursoForm.submitted)">
+            A descrição é obrigatória e deve ter pelo menos 10 caracteres.
           </small>
 
-          <button class="btn-send" type="submit" [disabled]="enviandoSugestao">
+          <button
+            class="btn-send"
+            type="submit"
+            [disabled]="enviandoSugestao || recursoForm.invalid || !websiteOuEmailValido(novoRecurso.website)"
+          >
             {{ enviandoSugestao ? 'A enviar...' : 'Enviar sugestão' }}
           </button>
         </form>
