@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './home.css'
 })
 export class HomeComponent {
-  novaMensagem: string = '';
+  novaMensagem = '';
 
   mensagensChat: { autor: 'user' | 'bot'; texto: string }[] = [
     {

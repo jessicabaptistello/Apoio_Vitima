@@ -1,7 +1,7 @@
 import express from 'express';
 import type { Request, Response } from 'express';
-import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
+import { supabase } from './config/supabase.js';
 import {
   STATUS_PEDIDOS_VALIDOS,
   STATUS_RECURSOS_VALIDOS,
@@ -11,7 +11,7 @@ import {
   textoValido,
   validarPedido,
   validarRecurso
-} from './utils/helpers';
+} from './utils/helpers.js';
 
 dotenv.config();
 
@@ -19,79 +19,6 @@ const app = express();
 app.use(express.json());
 
 const PORT = Number(process.env.PORT) || 10000;
-
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
-
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('Variáveis SUPABASE_URL e/ou SUPABASE_KEY em falta no .env');
-  process.exit(1);
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-
-function respostaErro(res: Response, status: number, mensagem: string, detalhe?: any) {
-  return res.status(status).json({
-    success: false,
-    message: mensagem,
-    detail: detalhe ?? null
-  });
-}
-
-function respostaSucesso(res: Response, status: number, mensagem: string, data?: any) {
-  return res.status(status).json({
-    success: true,
-    message: mensagem,
-    data: data ?? null
-  });
-}
-
-async function executarComTimeout<T>(operacao: PromiseLike<T>, timeoutMs: number = 10000): Promise<T> {
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error('Tempo limite excedido ao comunicar com o Supabase.'));
-    }, timeoutMs);
-  });
-
-  return Promise.race([Promise.resolve(operacao as T), timeoutPromise]);
-}
-
-function textoValido(valor: any, minimo = 1) {
-  return typeof valor === 'string' && valor.trim().length >= minimo;
-}
-
-function validarPedido(body: any) {
-  const erros: string[] = [];
-
-  if (!textoValido(body.email)) erros.push('email é obrigatório');
-  if (!textoValido(body.tipo_pedido)) erros.push('tipo_pedido é obrigatório');
-  if (!textoValido(body.contacto)) erros.push('contacto é obrigatório');
-  if (!textoValido(body.distrito)) erros.push('distrito é obrigatório');
-  if (!textoValido(body.descricao, 10)) erros.push('descricao é obrigatória e deve ter pelo menos 10 caracteres');
-
-  return erros;
-}
-
-function validarRecurso(body: any, exigirStatus = false) {
-  const erros: string[] = [];
-
-  if (!textoValido(body.nome)) erros.push('nome é obrigatório');
-  if (!textoValido(body.tipo)) erros.push('tipo é obrigatório');
-  if (!textoValido(body.contacto)) erros.push('contacto é obrigatório');
-  if (!textoValido(body.distrito)) erros.push('distrito é obrigatório');
-  if (!textoValido(body.descricao, 10)) erros.push('descricao é obrigatória e deve ter pelo menos 10 caracteres');
-
-  if (exigirStatus) {
-    if (!textoValido(body.status)) {
-      erros.push('status é obrigatório');
-    } else if (!STATUS_RECURSOS_VALIDOS.includes(body.status)) {
-      erros.push(`status inválido. Use: ${STATUS_RECURSOS_VALIDOS.join(', ')}`);
-    }
-  }
-
-  return erros;
-}
 
 app.get('/', (_req: Request, res: Response) => {
   return respostaSucesso(res, 200, 'API de Apoio à Vítima online', {
@@ -115,14 +42,7 @@ app.post('/pedidos', async (req: Request, res: Response) => {
       return respostaErro(res, 400, 'Dados inválidos', erros);
     }
 
-    const {
-      email,
-      tipo_pedido,
-      contacto,
-      distrito,
-      descricao,
-      user_id
-    } = req.body;
+    const { email, tipo_pedido, contacto, distrito, descricao, user_id } = req.body;
 
     const payload: any = {
       email: email.trim(),
@@ -138,10 +58,7 @@ app.post('/pedidos', async (req: Request, res: Response) => {
     }
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('pedidos')
-        .insert([payload])
-        .select(),
+      supabase.from('pedidos').insert([payload]).select(),
       10000
     );
 
@@ -189,11 +106,7 @@ app.get('/pedidos/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('pedidos')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle(),
+      supabase.from('pedidos').select('*').eq('id', id).maybeSingle(),
       10000
     );
 
@@ -245,11 +158,7 @@ app.patch('/pedidos/:id', async (req: Request, res: Response) => {
     }
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('pedidos')
-        .update(updates)
-        .eq('id', id)
-        .select(),
+      supabase.from('pedidos').update(updates).eq('id', id).select(),
       10000
     );
 
@@ -272,11 +181,7 @@ app.delete('/pedidos/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('pedidos')
-        .delete()
-        .eq('id', id)
-        .select(),
+      supabase.from('pedidos').delete().eq('id', id).select(),
       10000
     );
 
@@ -372,11 +277,7 @@ app.get('/recursos/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('recursos')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle(),
+      supabase.from('recursos').select('*').eq('id', id).maybeSingle(),
       10000
     );
 
@@ -454,11 +355,7 @@ app.patch('/recursos/:id/status', async (req: Request, res: Response) => {
     }
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('recursos')
-        .update({ status: status.trim() })
-        .eq('id', id)
-        .select(),
+      supabase.from('recursos').update({ status: status.trim() }).eq('id', id).select(),
       10000
     );
 
@@ -481,11 +378,7 @@ app.delete('/recursos/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('recursos')
-        .delete()
-        .eq('id', id)
-        .select(),
+      supabase.from('recursos').delete().eq('id', id).select(),
       10000
     );
 

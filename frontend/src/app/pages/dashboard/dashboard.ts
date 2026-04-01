@@ -13,11 +13,11 @@ import { SupabaseService } from '../../services/supabase';
   styleUrls: ['./dashboard.css']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  nomeutilizador: string = 'Utilizador';
-  isAdmin: boolean = false;
-  activeSection: string = 'info';
+  nomeutilizador = 'Utilizador';
+  isAdmin = false;
+  activeSection = 'info';
 
-  isDarkMode: boolean = false;
+  isDarkMode = false;
 
   pedidos: any[] = [];
   recursosPendentes: any[] = [];
@@ -25,11 +25,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private authSubscription: any;
 
-  recursoSelecionadoPorPedido: { [key: number]: number | null } = {};
+  recursoSelecionadoPorPedido: Record<number, number | null> = {};
 
   pedidoEmEdicaoId: number | null = null;
   pedidoEditando: any = null;
-  pedidoEditandoSubmitting: boolean = false;
+  pedidoEditandoSubmitting = false;
 
   novoPedido = {
     email: '',
@@ -113,12 +113,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   ];
 
-  pedidoSubmitting: boolean = false;
+  pedidoSubmitting = false;
   readonly contactoPattern = '^[0-9]{9,15}$';
 
-  modalOpen: boolean = false;
-  modalTitle: string = '';
-  modalMessage: string = '';
+  modalOpen = false;
+  modalTitle = '';
+  modalMessage = '';
   modalMode: 'alert' | 'confirm' = 'alert';
   private modalResolver: ((value: boolean) => void) | null = null;
 
@@ -438,7 +438,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  cancelarEdicaoPedido(confirmarCancelamento: boolean = true) {
+  cancelarEdicaoPedido(confirmarCancelamento = true) {
     if (confirmarCancelamento && this.pedidoEmEdicaoId) {
       this.abrirModalAlerta('Edição cancelada', 'As alterações não guardadas foram descartadas.');
     }

@@ -12,19 +12,19 @@ import { SupabaseService } from '../../services/supabase';
   styleUrls: ['./apoio.css']
 })
 export class ApoioComponent implements OnInit {
-  filtroDistrito: string = '';
-  filtroTipo: string = '';
-  pesquisa: string = '';
+  filtroDistrito = '';
+  filtroTipo = '';
+  pesquisa = '';
 
   recursos: any[] = [];
-  carregando: boolean = true;
-  enviandoSugestao: boolean = false;
+  carregando = true;
+  enviandoSugestao = false;
 
   readonly contactoPattern = '^[0-9]{9,15}$';
 
-  modalOpen: boolean = false;
-  modalTitle: string = '';
-  modalMessage: string = '';
+  modalOpen = false;
+  modalTitle = '';
+  modalMessage = '';
 
   novoRecurso = {
     nome: '',
