@@ -24,7 +24,7 @@ export class SupabaseService {
 
   private async executarComTimeout<T = any>(
     operacao: PromiseLike<T>,
-    timeoutMs: number = 15000
+    timeoutMs = 15000
   ): Promise<T> {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
@@ -273,7 +273,7 @@ export class SupabaseService {
       const user = await this.getUser();
 
       if (!user) {
-        return [];
+        return null;
       }
 
       const metadata = user.user_metadata || {};

@@ -12,15 +12,15 @@ import { SupabaseService } from '../../services/supabase';
   styleUrls: ['./login.css']
 })
 export class LoginComponent {
-  email: string = '';
-  password: string = '';
-  nomeCompleto: string = '';
+  email = '';
+  password = '';
+  nomeCompleto = '';
 
-  loadingLogin: boolean = false;
-  loadingSignUp: boolean = false;
+  loadingLogin = false;
+  loadingSignUp = false;
 
-  errorMessage: string = '';
-  successMessage: string = '';
+  errorMessage = '';
+  successMessage = '';
 
   constructor(
     private supabaseService: SupabaseService,

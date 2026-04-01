@@ -12,7 +12,7 @@ import { SupabaseService } from '../../services/supabase';
 })
 export class DetalheRecursoComponent implements OnInit {
   recurso: any = null;
-  carregando: boolean = true;
+  carregando = true;
 
   constructor(
     private route: ActivatedRoute,
