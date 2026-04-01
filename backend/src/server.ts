@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
@@ -16,6 +17,7 @@ import {
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = Number(process.env.PORT) || 10000;
@@ -74,30 +76,43 @@ app.post('/pedidos', async (req: Request, res: Response) => {
 
 app.get('/pedidos', async (req: Request, res: Response) => {
   try {
-    const { user_id, status } = req.query;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return respostaErro(res, 401, 'Token não enviado.');
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
+
+    const {
+      data: { user },
+      error: userError
+    } = await supabase.auth.getUser(token);
+
+    if (userError || !user) {
+      return respostaErro(res, 401, 'Utilizador não autenticado.', userError?.message);
+    }
+
+    const isAdmin = (user.user_metadata?.['role'] ?? '') === 'admin';
 
     let query = supabase
       .from('pedidos')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (user_id) {
-      query = query.eq('user_id', String(user_id));
-    }
-
-    if (status) {
-      query = query.eq('status', String(status));
+    if (!isAdmin) {
+      query = query.eq('user_id', user.id);
     }
 
     const resultado: any = await executarComTimeout(query, 10000);
 
     if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao listar pedidos', resultado.error.message);
+      return respostaErro(res, 400, 'Erro ao obter pedidos', resultado.error.message);
     }
 
-    return respostaSucesso(res, 200, 'Pedidos listados com sucesso', resultado.data);
+    return respostaSucesso(res, 200, 'Pedidos obtidos com sucesso', resultado.data);
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao listar pedidos', error.message);
+    return respostaErro(res, 500, 'Erro interno ao obter pedidos', error.message);
   }
 });
 
@@ -127,52 +142,80 @@ app.get('/pedidos/:id', async (req: Request, res: Response) => {
 app.patch('/pedidos/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const {
+      status,
+      recurso_id,
+      recurso_nome,
+      recurso_contacto,
+      recurso_website,
+      mensagem_encaminhamento
+    } = req.body;
 
-    const camposPermitidos = [
-      'status',
-      'recurso_id',
-      'recurso_nome',
-      'recurso_contacto',
-      'recurso_website',
-      'mensagem_encaminhamento'
-    ];
+    console.log('PATCH /pedidos/:id =>', { id, ...req.body });
 
-    const updates: any = {};
-
-    for (const campo of camposPermitidos) {
-      if (req.body[campo] !== undefined) {
-        updates[campo] = req.body[campo];
-      }
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do pedido é obrigatório.'
+      });
     }
 
-    if (Object.keys(updates).length === 0) {
-      return respostaErro(res, 400, 'Nenhum campo válido enviado para atualização');
+    const updateData: any = {};
+
+    if (status) {
+      updateData.status = status;
     }
 
-    if (updates.status && !STATUS_PEDIDOS_VALIDOS.includes(updates.status)) {
-      return respostaErro(
-        res,
-        400,
-        `Status inválido. Use: ${STATUS_PEDIDOS_VALIDOS.join(', ')}`
-      );
+    if (status === 'Encaminhado') {
+      updateData.recurso_id = recurso_id ?? null;
+      updateData.recurso_nome = recurso_nome ?? null;
+      updateData.recurso_contacto = recurso_contacto ?? null;
+      updateData.recurso_website = recurso_website ?? null;
+      updateData.mensagem_encaminhamento = mensagem_encaminhamento ?? null;
+    } else if (status && status !== 'Encaminhado') {
+      updateData.recurso_id = null;
+      updateData.recurso_nome = null;
+      updateData.recurso_contacto = null;
+      updateData.recurso_website = null;
+      updateData.mensagem_encaminhamento = null;
     }
 
-    const resultado: any = await executarComTimeout(
-      supabase.from('pedidos').update(updates).eq('id', id).select(),
-      10000
-    );
+    const { data, error, count, status: supabaseStatus, statusText } =
+      await supabase
+        .from('pedidos')
+        .update(updateData)
+        .eq('id', id)
+        .select();
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao atualizar pedido', resultado.error.message);
+    console.log('Resultado PATCH pedidos:', {
+      error,
+      data,
+      count,
+      status: supabaseStatus,
+      statusText
+    });
+
+    if (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Erro ao atualizar pedido.',
+        error: error.message
+      });
     }
 
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Pedido não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Pedido atualizado com sucesso', resultado.data);
+    return res.status(200).json({
+      success: true,
+      message: 'Pedido atualizado com sucesso.',
+      data
+    });
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao atualizar pedido', error.message);
+    console.error('Erro no PATCH /pedidos/:id:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor.',
+      error: error.message
+    });
   }
 });
 
