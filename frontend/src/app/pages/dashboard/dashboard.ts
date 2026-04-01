@@ -80,7 +80,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   ];
 
-
   guiaAberto: string | null = null;
 
   guiaAjuda = [
@@ -139,10 +138,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
     await this.supabaseService.garantirSessaoPronta();
     await this.inicializarDashboard();
 
-    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         await this.inicializarDashboard();
-      } else {
+      } else if (event === 'SIGNED_OUT') {
         this.nomeutilizador = 'Utilizador';
         this.isAdmin = false;
         this.pedidos = [];
@@ -393,23 +392,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async fazerLogout(event: Event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  const confirmar = await this.abrirModalConfirmacao(
-    'Confirmar logout',
-    'Tem a certeza que deseja terminar a sessão?'
-  );
+    const confirmar = await this.abrirModalConfirmacao(
+      'Confirmar logout',
+      'Tem a certeza que deseja terminar a sessão?'
+    );
 
-  if (!confirmar) return;
+    if (!confirmar) return;
 
-  try {
-    await this.supabaseService.signOut();
-  } catch (error) {
-    console.error('Erro no logout:', error);
+    try {
+      await this.supabaseService.signOut();
+    } catch (error) {
+      console.error('Erro no logout:', error);
+    }
+
+    await this.router.navigate(['/login']);
   }
-
-  await this.router.navigate(['/login']);
-}
 
   saidaRapida(event: Event) {
     event.preventDefault();

@@ -273,7 +273,7 @@ export class SupabaseService {
       const user = await this.getUser();
 
       if (!user) {
-        return [];
+        return null;
       }
 
       const metadata = user.user_metadata || {};
