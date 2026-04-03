@@ -412,7 +412,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   const resultado = await this.supabaseService.signOut();
 
   if (resultado?.error) {
-    console.error('Erro no logout:', resultado.error);
     await this.abrirModalAlerta(
       'Erro ao terminar sessão',
       resultado.error.message || 'Não foi possível terminar a sessão.'
@@ -425,6 +424,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   this.pedidos = [];
   this.recursosPendentes = [];
   this.recursosAprovados = [];
+  this.recursoSelecionadoPorPedido = {};
+  this.cancelarEdicaoPedido(false);
   this.activeSection = 'info';
 
   await this.router.navigate(['/login']);
@@ -532,7 +533,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async apagarPedido(id: number) {
+ async apagarPedido(id: string | number) {
   const confirmar = await this.abrirModalConfirmacao(
     'Apagar pedido',
     'Tem a certeza que deseja apagar este pedido?'
