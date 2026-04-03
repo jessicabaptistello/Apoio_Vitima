@@ -100,10 +100,12 @@
             placeholder="Nome do recurso"
             required
             minlength="3"
-            [class.invalid-field]="nomeModel.invalid && (nomeModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="nomeModel.invalid && (nomeModel.dirty || nomeModel.touched || recursoForm.submitted)"
+            [class.valid-field]="nomeModel.valid && (nomeModel.dirty || nomeModel.touched)"
           >
-          <small class="validation-error" *ngIf="nomeModel.invalid && (nomeModel.touched || recursoForm.submitted)">
-            O nome do recurso é obrigatório e deve ter pelo menos 3 caracteres.
+          <small class="validation-error" *ngIf="nomeModel.invalid && (nomeModel.dirty || nomeModel.touched || recursoForm.submitted)">
+            <span *ngIf="nomeModel.errors?.['required']">O nome do recurso é obrigatório.</span>
+            <span *ngIf="nomeModel.errors?.['minlength']">O nome do recurso deve ter pelo menos 3 caracteres.</span>
           </small>
 
           <input
@@ -114,10 +116,12 @@
             placeholder="Tipo de apoio"
             required
             minlength="4"
-            [class.invalid-field]="tipoModel.invalid && (tipoModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="tipoModel.invalid && (tipoModel.dirty || tipoModel.touched || recursoForm.submitted)"
+            [class.valid-field]="tipoModel.valid && (tipoModel.dirty || tipoModel.touched)"
           >
-          <small class="validation-error" *ngIf="tipoModel.invalid && (tipoModel.touched || recursoForm.submitted)">
-            O tipo de apoio é obrigatório e deve ter pelo menos 4 caracteres.
+          <small class="validation-error" *ngIf="tipoModel.invalid && (tipoModel.dirty || tipoModel.touched || recursoForm.submitted)">
+            <span *ngIf="tipoModel.errors?.['required']">O tipo de apoio é obrigatório.</span>
+            <span *ngIf="tipoModel.errors?.['minlength']">O tipo de apoio deve ter pelo menos 4 caracteres.</span>
           </small>
 
           <input
@@ -130,10 +134,12 @@
             [pattern]="contactoPattern"
             inputmode="numeric"
             maxlength="15"
-            [class.invalid-field]="contactoModel.invalid && (contactoModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || recursoForm.submitted)"
+            [class.valid-field]="contactoModel.valid && (contactoModel.dirty || contactoModel.touched)"
           >
-          <small class="validation-error" *ngIf="contactoModel.invalid && (contactoModel.touched || recursoForm.submitted)">
-            O contacto é obrigatório e deve conter apenas números, com pelo menos 9 dígitos.
+          <small class="validation-error" *ngIf="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || recursoForm.submitted)">
+            <span *ngIf="contactoModel.errors?.['required']">O contacto é obrigatório.</span>
+            <span *ngIf="contactoModel.errors?.['pattern']">O contacto deve conter apenas números e ter pelo menos 9 dígitos.</span>
           </small>
 
           <input
@@ -143,11 +149,12 @@
             #websiteModel="ngModel"
             placeholder="Website ou e-mail"
             required
-            [class.invalid-field]="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.dirty || websiteModel.touched || recursoForm.submitted)"
+            [class.valid-field]="websiteOuEmailValido(novoRecurso.website) && (websiteModel.dirty || websiteModel.touched)"
           >
           <small
             class="validation-error"
-            *ngIf="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.touched || recursoForm.submitted)"
+            *ngIf="(!websiteOuEmailValido(novoRecurso.website)) && (websiteModel.dirty || websiteModel.touched || recursoForm.submitted)"
           >
             O website ou email é obrigatório e deve ser válido.
           </small>
@@ -159,9 +166,10 @@
             #distritoModel="ngModel"
             placeholder="Distrito"
             required
-            [class.invalid-field]="distritoModel.invalid && (distritoModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || recursoForm.submitted)"
+            [class.valid-field]="distritoModel.valid && (distritoModel.dirty || distritoModel.touched)"
           >
-          <small class="validation-error" *ngIf="distritoModel.invalid && (distritoModel.touched || recursoForm.submitted)">
+          <small class="validation-error" *ngIf="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || recursoForm.submitted)">
             O distrito é obrigatório.
           </small>
 
@@ -172,16 +180,20 @@
             placeholder="Descrição do recurso"
             required
             minlength="10"
-            [class.invalid-field]="descricaoModel.invalid && (descricaoModel.touched || recursoForm.submitted)"
+            [class.invalid-field]="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || recursoForm.submitted)"
+            [class.valid-field]="descricaoModel.valid && (descricaoModel.dirty || descricaoModel.touched)"
           ></textarea>
-          <small class="validation-error" *ngIf="descricaoModel.invalid && (descricaoModel.touched || recursoForm.submitted)">
-            A descrição é obrigatória e deve ter pelo menos 10 caracteres.
+          <small class="validation-error" *ngIf="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || recursoForm.submitted)">
+            <span *ngIf="descricaoModel.errors?.['required']">A descrição é obrigatória.</span>
+            <span *ngIf="descricaoModel.errors?.['minlength']">A descrição deve ter pelo menos 10 caracteres.</span>
           </small>
 
           <button
             class="btn-send"
             type="submit"
             [disabled]="enviandoSugestao || recursoForm.invalid || !websiteOuEmailValido(novoRecurso.website)"
+            [class.btn-send-enabled]="!(enviandoSugestao || recursoForm.invalid || !websiteOuEmailValido(novoRecurso.website))"
+            [class.btn-send-disabled]="enviandoSugestao || recursoForm.invalid || !websiteOuEmailValido(novoRecurso.website)"
           >
             {{ enviandoSugestao ? 'A enviar...' : 'Enviar sugestão' }}
           </button>

@@ -41,9 +41,12 @@
           #emailModel="ngModel"
           required
           email
+          [class.input-invalid]="emailModel.invalid && (emailModel.dirty || emailModel.touched)"
+          [class.input-valid]="emailModel.valid && (emailModel.dirty || emailModel.touched)"
         >
-        <small class="validation-error" *ngIf="email && emailModel.invalid">
-          Introduza um e-mail válido.
+        <small class="validation-error" *ngIf="emailModel.invalid && (emailModel.dirty || emailModel.touched)">
+          <span *ngIf="emailModel.errors?.['required']">O e-mail é obrigatório.</span>
+          <span *ngIf="emailModel.errors?.['email']">Introduza um e-mail válido.</span>
         </small>
       </div>
 
@@ -59,9 +62,12 @@
           #passwordModel="ngModel"
           required
           minlength="6"
+          [class.input-invalid]="passwordModel.invalid && (passwordModel.dirty || passwordModel.touched)"
+          [class.input-valid]="passwordModel.valid && (passwordModel.dirty || passwordModel.touched)"
         >
-        <small class="validation-error" *ngIf="password && password.length > 0 && password.length < 6">
-          A palavra-passe deve ter pelo menos 6 caracteres.
+        <small class="validation-error" *ngIf="passwordModel.invalid && (passwordModel.dirty || passwordModel.touched)">
+          <span *ngIf="passwordModel.errors?.['required']">A palavra-passe é obrigatória.</span>
+          <span *ngIf="passwordModel.errors?.['minlength']">A palavra-passe deve ter pelo menos 6 caracteres.</span>
         </small>
       </div>
 
@@ -71,6 +77,8 @@
           (click)="handleLogin()"
           [disabled]="loadingLogin || loginForm.invalid"
           class="btn-login"
+          [class.btn-disabled]="loadingLogin || loginForm.invalid"
+          [class.btn-enabled]="!(loadingLogin || loginForm.invalid)"
         >
           {{ loadingLogin ? 'A entrar...' : 'Entrar' }}
         </button>
@@ -80,6 +88,8 @@
           (click)="handleSignUp()"
           [disabled]="loadingSignUp || loginForm.invalid"
           class="btn-register"
+          [class.btn-disabled]="loadingSignUp || loginForm.invalid"
+          [class.btn-enabled-secondary]="!(loadingSignUp || loginForm.invalid)"
         >
           {{ loadingSignUp ? 'A criar conta...' : 'Criar nova conta' }}
         </button>
