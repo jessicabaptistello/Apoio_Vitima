@@ -8,22 +8,56 @@
 
 # Diretório de Apoio à Vítima
 
-Aplicação web que permite consultar e adicionar recursos de apoio a vítimas de crime ou violência doméstica, organizados por tipo e distrito.
+Aplicação web que permite às vítimas encontrar apoio de forma rápida, discreta e organizada, através de um diretório de recursos e gestão de pedidos de ajuda.
 
-##  ODS
+---
 
-ODS 16 — Paz, Justiça e Instituições Eficazes
+## ODS
+
+**ODS 16 — Paz, Justiça e Instituições Eficazes**
+
 Este projeto facilita o acesso a informação essencial para vítimas encontrarem ajuda.
 
 ---
 
-##  Stack Tecnológica
+## Stack Tecnológica
 
-* Angular
-* Node.js + Express
-* Supabase (PostgreSQL)
-* GitHub
-* Postman
+- Angular (Frontend)
+- Node.js + Express (Backend)
+- Supabase (PostgreSQL + Auth)
+- GitHub (Versionamento + CI)
+- Postman (Testes API)
+- Vercel (Deploy Frontend)
+- Render (Deploy Backend)
+
+---
+
+## Demonstração
+
+### Homepage
+![Homepage](./home.png)
+![Homepage](./home2.png)
+![Homepage](./home3.png)
+
+### Conscientizacao
+![Login](./conscientizacao.png)
+
+### Login / Registo
+![Login](./login.png)
+
+### Dashboard
+![Dashboard](./dashboard1.png)
+![Dashboard](./dashboard2.png)
+![Dashboard](./dashboard3.png)
+![Dashboard](./dashboard4.png)
+![Dashboard](./dashboard5.png)
+
+### Recursos
+![Recursos](./recursos1.png)
+![Recursos](./recursos2.png)
+
+### DarkMode
+![DarkMode](./darkmode.png)
 
 ---
 
@@ -37,11 +71,43 @@ npm install
 npm run dev
 ```
 
+API disponível em:  
+http://localhost:3000 
+
+
 ### Frontend
 
 ```bash
 ng serve
 ```
+
+App disponível em:  
+http://localhost:4200  
+
+---
+
+## Autenticação
+
+A aplicação utiliza **Supabase Auth** com autenticação por email e palavra-passe.
+
+Cada utilizador possui:
+- `full_name` → nome do utilizador  
+- `role` → define permissões (`user` ou `admin`)  
+
+O acesso às funcionalidades é controlado com base no role.
+
+---
+
+## Integração
+
+O frontend comunica com o backend através de uma **API REST**.
+
+O backend é responsável por:
+- validação de dados  
+- ligação à base de dados (Supabase)  
+- gestão de pedidos e recursos  
+
+O frontend consome a API usando `fetch`.
 
 ---
 
@@ -209,7 +275,7 @@ Foram executados testes unitários no frontend Angular com sucesso.
 
 ### Comando utilizado
 ```bash
-ng teste
+ng test
 ```
 
 ##  Printscreen Testes
