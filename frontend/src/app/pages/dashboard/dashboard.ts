@@ -533,7 +533,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
- async apagarPedido(id: string | number) {
+ async apagarPedido(pedidoOuId: any) {
+  const id =
+    typeof pedidoOuId === 'object' && pedidoOuId !== null
+      ? pedidoOuId.id
+      : pedidoOuId;
+
+  console.log('ID recebido para apagar:', id, 'valor original:', pedidoOuId);
+
   const confirmar = await this.abrirModalConfirmacao(
     'Apagar pedido',
     'Tem a certeza que deseja apagar este pedido?'
@@ -543,15 +550,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   const resultado = await this.supabaseService.apagarPedido(id);
 
+  console.log('Resultado do apagar:', resultado);
+
   if (resultado?.error) {
-    await this.abrirModalAlerta(
+    this.abrirModalAlerta(
       'Erro ao apagar pedido',
       resultado.error.message || 'Não foi possível apagar o pedido.'
     );
     return;
   }
 
-  await this.carregarPedidos();
+  this.pedidos = this.pedidos.filter((p: any) => String(p.id) !== String(id));
+  this.cdr.detectChanges();
+
+  this.abrirModalAlerta('Sucesso', 'Pedido apagado com sucesso.');
 }
 
   async atualizarStatusPedido(pedido: any, novoStatus: string) {

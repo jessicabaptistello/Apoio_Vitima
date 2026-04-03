@@ -129,14 +129,48 @@ app.patch('/pedidos/:id', async (req: Request, res: Response) => {
 });
 
 app.delete('/pedidos/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
+  try {
+    const id = String(req.params.id ?? '').trim();
 
-  const resultado: any = await executarComTimeout(
-    supabase.from('pedidos').delete().eq('id', id),
-    10000
-  );
+    console.log('DELETE /pedidos/:id -> id recebido:', req.params.id);
+    console.log('DELETE /pedidos/:id -> id tratado:', id);
 
-  return respostaSucesso(res, 200, 'Apagado', resultado.data);
+    if (!id) {
+      return respostaErro(res, 400, 'ID inválido.');
+    }
+
+    const resultado: any = await executarComTimeout(
+      supabase
+        .from('pedidos')
+        .delete()
+        .eq('id', id)
+        .select('id'),
+      10000
+    );
+
+    console.log('DELETE resultado:', resultado);
+
+    if (resultado?.error) {
+      return respostaErro(
+        res,
+        400,
+        resultado.error.message || 'Erro ao apagar pedido.'
+      );
+    }
+
+    if (!resultado?.data || resultado.data.length === 0) {
+      return respostaErro(res, 404, 'Pedido não encontrado.');
+    }
+
+    return respostaSucesso(res, 200, 'Pedido apagado com sucesso.', resultado.data);
+  } catch (error: any) {
+    console.error('Erro interno ao apagar pedido:', error);
+    return respostaErro(
+      res,
+      500,
+      error?.message || 'Erro interno ao apagar pedido.'
+    );
+  }
 });
 
 /* ================= RECURSOS ================= */
