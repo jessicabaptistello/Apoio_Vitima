@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import type { Request, Response } from 'express';
 import * as dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
@@ -16,31 +17,25 @@ import {
 dotenv.config();
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const PORT = Number(process.env.PORT) || 10000;
 
 app.get('/', (_req: Request, res: Response) => {
-  return respostaSucesso(res, 200, 'API de Apoio à Vítima online', {
-    api: 'Apoio à Vítima',
-    status: 'online'
-  });
+  return respostaSucesso(res, 200, 'API online');
 });
 
 app.get('/health', (_req: Request, res: Response) => {
-  return respostaSucesso(res, 200, 'Servidor operacional', {
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
+  return respostaSucesso(res, 200, 'OK');
 });
+
+/* ================= PEDIDOS ================= */
 
 app.post('/pedidos', async (req: Request, res: Response) => {
   try {
     const erros = validarPedido(req.body);
-
-    if (erros.length > 0) {
-      return respostaErro(res, 400, 'Dados inválidos', erros);
-    }
+    if (erros.length > 0) return respostaErro(res, 400, 'Dados inválidos', erros);
 
     const { email, tipo_pedido, contacto, distrito, descricao, user_id } = req.body;
 
@@ -53,349 +48,154 @@ app.post('/pedidos', async (req: Request, res: Response) => {
       status: 'Pendente'
     };
 
-    if (user_id) {
-      payload.user_id = user_id;
-    }
+    if (user_id) payload.user_id = user_id;
 
     const resultado: any = await executarComTimeout(
       supabase.from('pedidos').insert([payload]).select(),
       10000
     );
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao criar pedido', resultado.error.message);
-    }
+    if (resultado.error) return respostaErro(res, 400, 'Erro', resultado.error.message);
 
-    return respostaSucesso(res, 201, 'Pedido criado com sucesso', resultado.data);
+    return respostaSucesso(res, 201, 'Criado', resultado.data);
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao criar pedido', error.message);
+    return respostaErro(res, 500, 'Erro interno', error.message);
   }
 });
 
 app.get('/pedidos', async (req: Request, res: Response) => {
   try {
-    const { user_id, status } = req.query;
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return respostaErro(res, 401, 'Sem token');
 
-    let query = supabase
-      .from('pedidos')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const token = authHeader.replace('Bearer ', '');
 
-    if (user_id) {
-      query = query.eq('user_id', String(user_id));
-    }
+    const { data: { user } } = await supabase.auth.getUser(token);
 
-    if (status) {
-      query = query.eq('status', String(status));
+    let query = supabase.from('pedidos').select('*').order('created_at', { ascending: false });
+
+    if ((user?.user_metadata?.role ?? '') !== 'admin') {
+      query = query.eq('user_id', user?.id);
     }
 
     const resultado: any = await executarComTimeout(query, 10000);
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao listar pedidos', resultado.error.message);
-    }
-
-    return respostaSucesso(res, 200, 'Pedidos listados com sucesso', resultado.data);
+    return respostaSucesso(res, 200, 'OK', resultado.data);
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao listar pedidos', error.message);
-  }
-});
-
-app.get('/pedidos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const resultado: any = await executarComTimeout(
-      supabase.from('pedidos').select('*').eq('id', id).maybeSingle(),
-      10000
-    );
-
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao obter pedido', resultado.error.message);
-    }
-
-    if (!resultado.data) {
-      return respostaErro(res, 404, 'Pedido não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Pedido encontrado com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao obter pedido', error.message);
+    return respostaErro(res, 500, 'Erro', error.message);
   }
 });
 
 app.patch('/pedidos/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const body = req.body;
 
-    const camposPermitidos = [
-      'status',
-      'recurso_id',
-      'recurso_nome',
-      'recurso_contacto',
-      'recurso_website',
-      'mensagem_encaminhamento'
-    ];
+    const updateData: any = {};
 
-    const updates: any = {};
+    if (body.email) updateData.email = body.email;
+    if (body.tipo_pedido) updateData.tipo_pedido = body.tipo_pedido;
+    if (body.contacto) updateData.contacto = body.contacto;
+    if (body.distrito) updateData.distrito = body.distrito;
+    if (body.descricao) updateData.descricao = body.descricao;
 
-    for (const campo of camposPermitidos) {
-      if (req.body[campo] !== undefined) {
-        updates[campo] = req.body[campo];
+    if (body.status) {
+      updateData.status = body.status;
+
+      if (body.status === 'Encaminhado') {
+        updateData.recurso_id = body.recurso_id ?? null;
+        updateData.recurso_nome = body.recurso_nome ?? null;
+        updateData.recurso_contacto = body.recurso_contacto ?? null;
+        updateData.recurso_website = body.recurso_website ?? null;
+        updateData.mensagem_encaminhamento = body.mensagem_encaminhamento ?? null;
+      } else {
+        updateData.recurso_id = null;
+        updateData.recurso_nome = null;
+        updateData.recurso_contacto = null;
+        updateData.recurso_website = null;
+        updateData.mensagem_encaminhamento = null;
       }
     }
 
-    if (Object.keys(updates).length === 0) {
-      return respostaErro(res, 400, 'Nenhum campo válido enviado para atualização');
-    }
-
-    if (updates.status && !STATUS_PEDIDOS_VALIDOS.includes(updates.status)) {
-      return respostaErro(
-        res,
-        400,
-        `Status inválido. Use: ${STATUS_PEDIDOS_VALIDOS.join(', ')}`
-      );
-    }
-
     const resultado: any = await executarComTimeout(
-      supabase.from('pedidos').update(updates).eq('id', id).select(),
+      supabase.from('pedidos').update(updateData).eq('id', id).select(),
       10000
     );
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao atualizar pedido', resultado.error.message);
-    }
-
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Pedido não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Pedido atualizado com sucesso', resultado.data);
+    return respostaSucesso(res, 200, 'Atualizado', resultado.data);
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao atualizar pedido', error.message);
+    return respostaErro(res, 500, 'Erro', error.message);
   }
 });
 
 app.delete('/pedidos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const resultado: any = await executarComTimeout(
-      supabase.from('pedidos').delete().eq('id', id).select(),
-      10000
-    );
+  const resultado: any = await executarComTimeout(
+    supabase.from('pedidos').delete().eq('id', id),
+    10000
+  );
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao remover pedido', resultado.error.message);
-    }
-
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Pedido não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Pedido removido com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao remover pedido', error.message);
-  }
+  return respostaSucesso(res, 200, 'Apagado', resultado.data);
 });
+
+/* ================= RECURSOS ================= */
 
 app.post('/recursos', async (req: Request, res: Response) => {
   try {
-    const erros = validarRecurso(req.body, false);
-
-    if (erros.length > 0) {
-      return respostaErro(res, 400, 'Dados inválidos', erros);
-    }
-
-    const { nome, tipo, contacto, website, distrito, descricao, status } = req.body;
-
-    const statusFinal = status && textoValido(status) ? status : 'Pendente';
-
-    if (!STATUS_RECURSOS_VALIDOS.includes(statusFinal)) {
-      return respostaErro(
-        res,
-        400,
-        `Status inválido. Use: ${STATUS_RECURSOS_VALIDOS.join(', ')}`
-      );
-    }
+    const { nome, tipo, contacto, website, distrito, descricao } = req.body;
 
     const resultado: any = await executarComTimeout(
-      supabase
-        .from('recursos')
-        .insert([
-          {
-            nome: nome.trim(),
-            tipo: tipo.trim(),
-            contacto: contacto.trim(),
-            website: textoValido(website) ? website.trim() : null,
-            distrito: distrito.trim(),
-            descricao: descricao.trim(),
-            status: statusFinal
-          }
-        ])
-        .select(),
+      supabase.from('recursos').insert([{
+        nome,
+        tipo,
+        contacto,
+        website,
+        distrito,
+        descricao,
+        status: 'pendente' 
+      }]).select(),
       10000
     );
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao criar recurso', resultado.error.message);
-    }
-
-    return respostaSucesso(res, 201, 'Recurso criado com sucesso', resultado.data);
+    return respostaSucesso(res, 201, 'Criado', resultado.data);
   } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao criar recurso', error.message);
+    return respostaErro(res, 500, 'Erro', error.message);
   }
 });
 
 app.get('/recursos', async (req: Request, res: Response) => {
-  try {
-    const { status } = req.query;
+  const { status } = req.query;
 
-    let query = supabase
-      .from('recursos')
-      .select('*')
-      .order('created_at', { ascending: false });
+  let query = supabase.from('recursos').select('*');
 
-    if (status) {
-      query = query.eq('status', String(status));
-    }
+  if (status) query = query.eq('status', String(status));
 
-    const resultado: any = await executarComTimeout(query, 10000);
+  const resultado: any = await executarComTimeout(query, 10000);
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao listar recursos', resultado.error.message);
-    }
-
-    return respostaSucesso(res, 200, 'Recursos listados com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao listar recursos', error.message);
-  }
-});
-
-app.get('/recursos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const resultado: any = await executarComTimeout(
-      supabase.from('recursos').select('*').eq('id', id).maybeSingle(),
-      10000
-    );
-
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao obter recurso', resultado.error.message);
-    }
-
-    if (!resultado.data) {
-      return respostaErro(res, 404, 'Recurso não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Recurso encontrado com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao obter recurso', error.message);
-  }
-});
-
-app.put('/recursos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const erros = validarRecurso(req.body, true);
-
-    if (erros.length > 0) {
-      return respostaErro(res, 400, 'Dados inválidos', erros);
-    }
-
-    const { nome, tipo, contacto, website, distrito, descricao, status } = req.body;
-
-    const resultado: any = await executarComTimeout(
-      supabase
-        .from('recursos')
-        .update({
-          nome: nome.trim(),
-          tipo: tipo.trim(),
-          contacto: contacto.trim(),
-          website: textoValido(website) ? website.trim() : null,
-          distrito: distrito.trim(),
-          descricao: descricao.trim(),
-          status: status.trim()
-        })
-        .eq('id', id)
-        .select(),
-      10000
-    );
-
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao atualizar recurso', resultado.error.message);
-    }
-
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Recurso não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Recurso atualizado com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao atualizar recurso', error.message);
-  }
+  return respostaSucesso(res, 200, 'OK', resultado.data);
 });
 
 app.patch('/recursos/:id/status', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+  const { id } = req.params;
 
-    if (!textoValido(status)) {
-      return respostaErro(res, 400, 'O campo status é obrigatório');
-    }
+  const resultado: any = await executarComTimeout(
+    supabase.from('recursos').update({ status: req.body.status }).eq('id', id).select(),
+    10000
+  );
 
-    if (!STATUS_RECURSOS_VALIDOS.includes(status)) {
-      return respostaErro(
-        res,
-        400,
-        `Status inválido. Use: ${STATUS_RECURSOS_VALIDOS.join(', ')}`
-      );
-    }
-
-    const resultado: any = await executarComTimeout(
-      supabase.from('recursos').update({ status: status.trim() }).eq('id', id).select(),
-      10000
-    );
-
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao atualizar status do recurso', resultado.error.message);
-    }
-
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Recurso não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Status do recurso atualizado com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao atualizar status do recurso', error.message);
-  }
+  return respostaSucesso(res, 200, 'Atualizado', resultado.data);
 });
 
 app.delete('/recursos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const resultado: any = await executarComTimeout(
-      supabase.from('recursos').delete().eq('id', id).select(),
-      10000
-    );
+  const resultado: any = await executarComTimeout(
+    supabase.from('recursos').delete().eq('id', id),
+    10000
+  );
 
-    if (resultado.error) {
-      return respostaErro(res, 400, 'Erro ao remover recurso', resultado.error.message);
-    }
-
-    if (!resultado.data || resultado.data.length === 0) {
-      return respostaErro(res, 404, 'Recurso não encontrado');
-    }
-
-    return respostaSucesso(res, 200, 'Recurso removido com sucesso', resultado.data);
-  } catch (error: any) {
-    return respostaErro(res, 500, 'Erro interno ao remover recurso', error.message);
-  }
+  return respostaSucesso(res, 200, 'Apagado', resultado.data);
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Servidor na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor na porta ${PORT}`));

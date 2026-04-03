@@ -3,12 +3,11 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || '';
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('Variáveis SUPABASE_URL e/ou SUPABASE_KEY em falta no .env');
-  process.exit(1);
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('SUPABASE_URL e SUPABASE_KEY precisam estar definidas.');
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+export const supabase = createClient(supabaseUrl, supabaseKey);

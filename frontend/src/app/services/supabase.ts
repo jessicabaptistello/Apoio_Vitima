@@ -203,104 +203,94 @@ export class SupabaseService {
   }
 
   async signOut() {
-    try {
-      const response: any = await this.executarComTimeout(
-        this.supabase.auth.signOut(),
-        8000
-      );
+  try {
+    const { error } = await this.supabase.auth.signOut();
 
-      return {
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao terminar sessão:', error);
-      return {
-        error: this.mensagemErro(error, 'Erro ao terminar sessão.')
-      };
-    }
+    return {
+      error: error ?? null
+    };
+  } catch (error: any) {
+    console.error('Erro inesperado ao terminar sessão:', error);
+    return {
+      error: this.mensagemErro(error, 'Erro ao terminar sessão.')
+    };
   }
+}
 
-  async criarPedido(dados: {
-    email: string;
-    tipo_pedido: string;
-    contacto: string;
-    distrito: string;
-    descricao: string;
-    [key: string]: any;
-  }) {
-    try {
-      const user = await this.getUser();
+  async criarPedido(dados: any) {
+  try {
+    const user = await this.getUser();
 
-      if (!user) {
-        return {
-          data: null,
-          error: { message: 'Utilizador não autenticado.' }
-        };
-      }
-
-      const payload: any = {
-        ...dados,
-        user_id: user.id
-      };
-
-      if (!payload.status) {
-        payload.status = 'Pendente';
-      }
-
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .insert([payload])
-          .select(),
-        8000
-      );
-
-      return {
-        data: response?.data ?? null,
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao criar pedido:', error);
+    if (!user) {
       return {
         data: null,
-        error: this.mensagemErro(error, 'Erro ao criar pedido.')
+        error: new Error('Utilizador não autenticado.')
       };
     }
+
+    const session = await this.getSession();
+
+    const response = await fetch('http://localhost:3000/pedidos', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({
+        user_id: user.id,
+        email: dados.email,
+        tipo_pedido: dados.tipo_pedido,
+        contacto: dados.contacto,
+        distrito: dados.distrito,
+        descricao: dados.descricao
+      })
+    });
+
+    const data = await response.json();
+
+    return {
+      data: data?.data ?? null,
+      error: response.ok ? null : new Error(data?.message || 'Erro ao criar pedido.')
+    };
+  } catch (error: any) {
+    console.error('Erro ao criar pedido:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error('Erro ao criar pedido.')
+    };
   }
+}
 
   async obterPedidos() {
-    try {
-      const user = await this.getUser();
+  try {
+    const session = await this.getSession();
 
-      if (!user) {
-        return null;
-      }
-
-      const metadata = user.user_metadata || {};
-      const isAdmin = (metadata['role'] ?? '') === 'admin';
-
-      let query = this.supabase
-        .from('pedidos')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!isAdmin) {
-        query = query.eq('user_id', user.id);
-      }
-
-      const response: any = await this.executarComTimeout(query, 8000);
-
-      if (response?.error) {
-        console.error('Erro ao obter pedidos:', response.error.message);
-        return null;
-      }
-
-      return response?.data || [];
-    } catch (error: any) {
-      console.error('Erro inesperado ao obter pedidos:', error);
+    if (!session?.access_token) {
+      console.error('Sessão não encontrada.');
       return null;
     }
+
+    const response = await fetch('http://localhost:3000/pedidos', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`
+      }
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Erro ao obter pedidos:', data?.message);
+      return null;
+    }
+
+    return data?.data || [];
+  } catch (error: any) {
+    console.error('Erro inesperado ao obter pedidos:', error);
+    return null;
   }
+}
 
   async carregarPedidos() {
     return await this.obterPedidos();
@@ -329,161 +319,137 @@ export class SupabaseService {
     }
   }
 
-  async apagarPedido(id: number | string) {
-    try {
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .delete()
-          .eq('id', id),
-        8000
-      );
-
-      return {
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao apagar pedido:', error);
-      return {
-        error: this.mensagemErro(error, 'Erro ao apagar pedido.')
-      };
-    }
-  }
+  
 
   async atualizarStatusPedido(id: number | string, status: string) {
-    try {
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .update({ status })
-          .eq('id', id)
-          .select(),
-        8000
-      );
+  try {
+    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status })
+    });
 
-      return {
-        data: response?.data ?? null,
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao atualizar status do pedido:', error);
-      return {
-        data: null,
-        error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
-      };
-    }
+    const data = await response.json();
+
+    return {
+      data: data?.data ?? null,
+      error: response.ok
+        ? null
+        : {
+            message:
+              data?.detail?.message ||
+              data?.detail ||
+              data?.message ||
+              'Erro ao atualizar status do pedido.'
+          }
+    };
+  } catch (error: any) {
+    console.error('Erro inesperado ao atualizar status do pedido:', error);
+    return {
+      data: null,
+      error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
+    };
   }
-
+}
   async atualizarPedidoUtilizador(
-    pedidoId: number,
-    dadosAtualizados: {
-      email: string;
-      tipo_pedido: string;
-      contacto: string;
-      distrito: string;
-      descricao: string;
-    }
-  ) {
-    try {
-      const user = await this.getUser();
-
-      if (!user) {
-        return {
-          data: null,
-          error: new Error('Utilizador não autenticado.')
-        };
-      }
-
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .update({
-            email: dadosAtualizados.email,
-            tipo_pedido: dadosAtualizados.tipo_pedido,
-            contacto: dadosAtualizados.contacto,
-            distrito: dadosAtualizados.distrito,
-            descricao: dadosAtualizados.descricao
-          })
-          .eq('id', pedidoId)
-          .eq('user_id', user.id)
-          .eq('status', 'Pendente')
-          .select(),
-        8000
-      );
-
-      return {
-        data: response?.data ?? null,
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao atualizar pedido do utilizador:', error);
-      return {
-        data: null,
-        error: error instanceof Error ? error : new Error('Erro ao atualizar pedido.')
-      };
-    }
+  pedidoId: string,
+  dadosAtualizados: {
+    email: string;
+    tipo_pedido: string;
+    contacto: string;
+    distrito: string;
+    descricao: string;
   }
+) {
+  try {
+    const session = await this.getSession();
+
+    const response = await fetch(`http://localhost:3000/pedidos/${pedidoId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify(dadosAtualizados)
+    });
+
+    const data = await response.json();
+
+    return {
+      data: data?.data ?? null,
+      error: response.ok ? null : new Error(data?.message || 'Erro ao atualizar pedido.')
+    };
+  } catch (error: any) {
+    console.error('Erro ao atualizar pedido:', error);
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error('Erro ao atualizar pedido.')
+    };
+  }
+}
+
+  async apagarPedido(id: number | string) {
+  try {
+    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
+      method: 'DELETE'
+    });
+
+    const data = await response.json();
+
+    return {
+      error: response.ok ? null : { message: data?.message || 'Erro ao apagar pedido.' }
+    };
+  } catch (error: any) {
+    console.error('Erro inesperado ao apagar pedido:', error);
+    return {
+      error: this.mensagemErro(error, 'Erro ao apagar pedido.')
+    };
+  }
+}
 
   async encaminharPedido(id: number | string, dados: any) {
-    try {
-      let payload: any = {};
+  try {
+    const session = await this.getSession();
 
-      if (typeof dados === 'string') {
-        payload = {
-          encaminhado_para: dados,
-          status: 'Encaminhado'
-        };
-      } else {
-        payload = {
-          ...dados,
-          status: dados?.status || 'Encaminhado'
-        };
-      }
+    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session?.access_token}`
+      },
+      body: JSON.stringify({
+        ...dados,
+        status: 'Encaminhado'
+      })
+    });
 
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('pedidos')
-          .update(payload)
-          .eq('id', id)
-          .select(),
-        8000
-      );
+    const data = await response.json();
 
-      return {
-        data: response?.data ?? null,
-        error: response?.error ?? null
-      };
-    } catch (error: any) {
-      console.error('Erro inesperado ao encaminhar pedido:', error);
-      return {
-        data: null,
-        error: this.mensagemErro(error, 'Erro ao encaminhar pedido.')
-      };
-    }
+    return {
+      data: data?.data ?? null,
+      error: response.ok ? null : new Error(data?.message || 'Erro ao encaminhar pedido.')
+    };
+  } catch (error: any) {
+    console.error('Erro ao encaminhar pedido:', error);
+    return {
+      data: null,
+      error: this.mensagemErro(error, 'Erro ao encaminhar pedido.')
+    };
   }
+}
 
   async obterRecursos() {
-    try {
-      const response: any = await this.executarComTimeout(
-        this.supabase
-          .from('recursos')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        8000
-      );
-
-      if (response?.error) {
-        console.error('Erro ao obter recursos:', response.error.message);
-        return null;
-      }
-
-      const recursos = response?.data || [];
-      return recursos.filter((recurso: any) => this.recursoEstaAprovado(recurso));
-    } catch (error: any) {
-      console.error('Erro inesperado ao obter recursos:', error);
-      return null;
-    }
+  try {
+    const response = await fetch('http://localhost:3000/recursos?status=aprovado');
+    const data = await response.json();
+    return data?.data || [];
+  } catch (error: any) {
+    console.error('Erro ao obter recursos:', error);
+    return null;
   }
+}
 
   async carregarRecursos() {
     return await this.obterRecursos();

@@ -311,104 +311,125 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async enviarPedido(form?: NgForm) {
-    if (this.pedidoSubmitting) return;
+  if (this.pedidoSubmitting) return;
 
-    const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
-    const emailLimpo = (email || '').trim();
-    const tipoLimpo = (tipo_pedido || '').trim();
-    const contactoLimpo = (contacto || '').trim();
-    const descricaoLimpa = (descricao || '').trim();
+  const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
+  const emailLimpo = (email || '').trim();
+  const tipoLimpo = (tipo_pedido || '').trim();
+  const contactoLimpo = (contacto || '').trim();
+  const descricaoLimpa = (descricao || '').trim();
 
-    if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distrito || !descricaoLimpa) {
-      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido de ajuda.');
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
-      this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
-      return;
-    }
-
-    if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
-      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter pelo menos 9 dígitos.');
-      return;
-    }
-
-    if (descricaoLimpa.length < 10) {
-      this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
-      return;
-    }
-
-    this.pedidoSubmitting = true;
-
-    try {
-      const { data, error } = await this.supabaseService.criarPedido({
-        email: emailLimpo,
-        tipo_pedido: tipoLimpo,
-        contacto: contactoLimpo,
-        distrito,
-        descricao: descricaoLimpa
-      });
-
-      if (error) {
-        this.abrirModalAlerta('Erro ao enviar pedido', error.message);
-        return;
-      }
-
-      const pedidoCriado = Array.isArray(data) ? data[0] : null;
-
-      if (pedidoCriado) {
-        this.pedidos = [
-          { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
-          ...this.pedidos
-        ];
-        this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
-      } else {
-        await this.carregarPedidos();
-      }
-
-      this.novoPedido = {
-        email: emailLimpo,
-        tipo_pedido: '',
-        contacto: '',
-        distrito: '',
-        descricao: ''
-      };
-
-      if (form) {
-        form.resetForm({ email: emailLimpo });
-      }
-
-      this.activeSection = 'meus-pedidos';
-      this.cdr.detectChanges();
-      this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
-    } finally {
-      this.pedidoSubmitting = false;
-    }
+  if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distrito || !descricaoLimpa) {
+    this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido de ajuda.');
+    return;
   }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+    this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
+    return;
+  }
+
+  if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
+    this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter pelo menos 9 dígitos.');
+    return;
+  }
+
+  if (descricaoLimpa.length < 10) {
+    this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
+    return;
+  }
+
+  this.pedidoSubmitting = true;
+
+  try {
+    const user = await this.supabaseService.getUser();
+
+    if (!user) {
+      this.abrirModalAlerta('Sessão inválida', 'Tem de iniciar sessão para enviar um pedido.');
+      return;
+    }
+
+    const { data, error } = await this.supabaseService.criarPedido({
+      user_id: user.id,
+      email: emailLimpo,
+      tipo_pedido: tipoLimpo,
+      contacto: contactoLimpo,
+      distrito,
+      descricao: descricaoLimpa
+    });
+
+    if (error) {
+      this.abrirModalAlerta('Erro ao enviar pedido', error.message);
+      return;
+    }
+
+    const pedidoCriado = Array.isArray(data) ? data[0] : null;
+
+    if (pedidoCriado) {
+      this.pedidos = [
+        { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
+        ...this.pedidos
+      ];
+      this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
+    } else {
+      await this.carregarPedidos();
+    }
+
+    this.novoPedido = {
+      email: emailLimpo,
+      tipo_pedido: '',
+      contacto: '',
+      distrito: '',
+      descricao: ''
+    };
+
+    if (form) {
+      form.resetForm({ email: emailLimpo });
+    }
+
+    this.activeSection = 'meus-pedidos';
+    this.cdr.detectChanges();
+    this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
+  } finally {
+    this.pedidoSubmitting = false;
+  }
+}
 
   verDetalhePedido(pedido: any) {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
-  async fazerLogout(event: Event) {
-    event.preventDefault();
+  async fazerLogout(event?: Event) {
+  event?.preventDefault();
 
-    const confirmar = await this.abrirModalConfirmacao(
-      'Confirmar logout',
-      'Tem a certeza que deseja terminar a sessão?'
+  const confirmar = await this.abrirModalConfirmacao(
+    'Confirmar logout',
+    'Tem a certeza que deseja terminar a sessão?'
+  );
+
+  if (!confirmar) return;
+
+  const resultado = await this.supabaseService.signOut();
+
+  if (resultado?.error) {
+    await this.abrirModalAlerta(
+      'Erro ao terminar sessão',
+      resultado.error.message || 'Não foi possível terminar a sessão.'
     );
-
-    if (!confirmar) return;
-
-    try {
-      await this.supabaseService.signOut();
-    } catch (error) {
-      console.error('Erro no logout:', error);
-    }
-
-    await this.router.navigate(['/login']);
+    return;
   }
+
+  this.nomeutilizador = 'Utilizador';
+  this.isAdmin = false;
+  this.pedidos = [];
+  this.recursosPendentes = [];
+  this.recursosAprovados = [];
+  this.recursoSelecionadoPorPedido = {};
+  this.cancelarEdicaoPedido(false);
+  this.activeSection = 'info';
+
+  await this.router.navigate(['/login']);
+}
 
   saidaRapida(event: Event) {
     event.preventDefault();
@@ -490,7 +511,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.pedidoEditandoSubmitting = true;
 
     try {
-      const { error } = await this.supabaseService.atualizarPedidoUtilizador(this.pedidoEmEdicaoId, {
+      const { error } = await this.supabaseService.atualizarPedidoUtilizador(String(this.pedidoEmEdicaoId), {
         email: emailLimpo,
         tipo_pedido: tipoLimpo,
         contacto: contactoLimpo,
@@ -512,40 +533,49 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async apagarPedido(pedido: any) {
-    if (!this.isAdmin) return;
+ async apagarPedido(id: string | number) {
+  const confirmar = await this.abrirModalConfirmacao(
+    'Apagar pedido',
+    'Tem a certeza que deseja apagar este pedido?'
+  );
 
-    const confirmar = await this.abrirModalConfirmacao('Apagar pedido', 'Tem a certeza que deseja apagar este pedido?');
-    if (!confirmar) return;
+  if (!confirmar) return;
 
-    const { error } = await this.supabaseService.apagarPedido(pedido.id);
+  const resultado = await this.supabaseService.apagarPedido(id);
 
-    if (error) {
-      this.abrirModalAlerta('Erro ao apagar pedido', error.message);
-      return;
-    }
-
-    await this.carregarPedidos();
-    this.cdr.detectChanges();
-    this.abrirModalAlerta('Sucesso', 'Pedido apagado com sucesso!');
+  if (resultado?.error) {
+    await this.abrirModalAlerta(
+      'Erro ao apagar pedido',
+      resultado.error.message || 'Não foi possível apagar o pedido.'
+    );
+    return;
   }
+
+  await this.carregarPedidos();
+}
 
   async atualizarStatusPedido(pedido: any, novoStatus: string) {
-    if (!this.isAdmin) return;
-    if (!novoStatus) return;
-    if (pedido.status === 'Concluído') return;
+  const resultado = await this.supabaseService.atualizarStatusPedido(
+    pedido.id,
+    novoStatus
+  );
 
-    const { error } = await this.supabaseService.atualizarStatusPedido(pedido.id, novoStatus);
-
-    if (error) {
-      this.abrirModalAlerta('Erro ao atualizar status', error.message);
-      return;
-    }
-
-    await this.carregarPedidos();
-    this.cdr.detectChanges();
-    this.abrirModalAlerta('Sucesso', 'Status atualizado com sucesso!');
+  if (resultado?.error) {
+    await this.abrirModalAlerta(
+      'Erro ao atualizar pedido',
+      resultado.error.message || 'Não foi possível atualizar o pedido.'
+    );
+    return;
   }
+
+  await this.abrirModalAlerta(
+  'Status atualizado',
+  'O status do pedido foi atualizado com sucesso.'
+);
+
+  pedido.status = novoStatus;
+  await this.carregarPedidos();
+}
 
   async encaminharPedido(pedido: any) {
     if (!this.isAdmin) return;
