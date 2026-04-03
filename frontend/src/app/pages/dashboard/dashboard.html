@@ -29,7 +29,8 @@
         <li><a (click)="setSection('info')">Homepage</a></li>
         <li><a (click)="setSection('direitos')">Direitos</a></li>
         <li><a (click)="setSection('guia')">Guia de Ajuda</a></li>
-        <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>
+        @if (!isAdmin) {
+        <li><a (click)="setSection('meus-pedidos')">Meus Pedidos</a></li>}
 
         <li *ngIf="isAdmin">
           <a (click)="setSection('todos-pedidos')" class="admin-link">
@@ -84,7 +85,7 @@
       </div>
     </section>
 
-    <section *ngIf="activeSection === 'guia'" class="centered-content">
+    <section *ngIf="activeSection === 'guia'"class="centered-content">
       <h2 class="section-title">Guia de Ajuda</h2>
 
       <div class="guia-header card">
@@ -132,8 +133,8 @@
         </article>
       </div>
     </section>
-
-    <section *ngIf="activeSection === 'info'" class="centered-content">
+@if (!isAdmin) {
+    <section *ngIf="activeSection === 'info'"class="centered-content">
       <div class="form-container">
         <span class="eyebrow">NOVO PEDIDO</span>
         <h2>Pedido de Ajuda</h2>
@@ -238,8 +239,9 @@
 </form>
       </div>
     </section>
+  }
 
-    <section *ngIf="activeSection === 'meus-pedidos'" class="centered-content">
+    <section *ngIf="activeSection === 'meus-pedidos' && !isAdmin "class="centered-content">
       <h2 class="section-title">Os Meus Pedidos</h2>
 
       <div *ngIf="pedidos.length === 0" class="empty-state">

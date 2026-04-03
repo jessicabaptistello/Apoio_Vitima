@@ -256,7 +256,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   setSection(section: string) {
-    this.activeSection = section;
+  if (this.isAdmin && section === 'meus-pedidos') {
+    this.activeSection = 'todos-pedidos';
+    return;
+  }
+
+  this.activeSection = section;
+
 
     if (section === 'meus-pedidos' || section === 'todos-pedidos' || section === 'status') {
       this.carregarPedidos().then(() => this.cdr.detectChanges());
@@ -311,7 +317,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   async enviarPedido(form?: NgForm) {
-  if (this.pedidoSubmitting) return;
+  if (this.isAdmin) {
+  this.abrirModalAlerta('Ação não permitida', 'Administradores não podem criar pedidos.');
+  return;
+}
 
   const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
   const emailLimpo = (email || '').trim();
