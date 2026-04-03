@@ -53,7 +53,8 @@ Este projeto facilita o acesso a informação essencial para vítimas encontrare
 ![Dashboard](./dashboard5.png)
 
 ### Recursos
-
+![Recursos](./recurso1.png)
+![Recursos](./recurso2.png)
 
 ### DarkMode
 ![DarkMode](./darkmode.png)
