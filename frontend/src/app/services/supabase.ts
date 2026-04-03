@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment.development';
 })
 export class SupabaseService {
   public supabase: SupabaseClient;
+  private apiUrl = 'https://apoio-vitima.onrender.com';
 
   constructor() {
     this.supabase = createClient(
@@ -230,7 +231,7 @@ export class SupabaseService {
 
     const session = await this.getSession();
 
-    const response = await fetch('http://localhost:3000/pedidos', {
+    const response = await fetch(`${this.apiUrl}/pedidos`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -270,7 +271,7 @@ export class SupabaseService {
       return null;
     }
 
-    const response = await fetch('http://localhost:3000/pedidos', {
+    const response = await fetch(`${this.apiUrl}/pedidos`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -323,7 +324,7 @@ export class SupabaseService {
 
   async atualizarStatusPedido(id: number | string, status: string) {
   try {
-    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
+    const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json'
@@ -366,7 +367,7 @@ export class SupabaseService {
   try {
     const session = await this.getSession();
 
-    const response = await fetch(`http://localhost:3000/pedidos/${pedidoId}`, {
+    const response = await fetch(`${this.apiUrl}/pedidos/${pedidoId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -390,16 +391,52 @@ export class SupabaseService {
   }
 }
 
-  async apagarPedido(id: number | string) {
+  async apagarPedido(idOuObjeto: any) {
   try {
-    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
-      method: 'DELETE'
+    const idBruto =
+      typeof idOuObjeto === 'object' && idOuObjeto !== null
+        ? idOuObjeto.id
+        : idOuObjeto;
+
+    const idNormalizado = String(idBruto ?? '').trim();
+
+    console.log('apagarPedido -> idBruto:', idBruto);
+    console.log('apagarPedido -> idNormalizado:', idNormalizado);
+
+    if (!idNormalizado) {
+      return {
+        error: {
+          message: 'ID inválido para apagar o pedido.'
+        }
+      };
+    }
+
+    const session = await this.getSession();
+
+    const response = await fetch(`${this.apiUrl}/pedidos/${idNormalizado}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {})
+      }
     });
 
-    const data = await response.json();
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    console.log('DELETE response.status:', response.status);
+    console.log('DELETE response.data:', data);
 
     return {
-      error: response.ok ? null : { message: data?.message || 'Erro ao apagar pedido.' }
+      error: response.ok
+        ? null
+        : { message: data?.message || data?.detail || 'Erro ao apagar pedido.' }
     };
   } catch (error: any) {
     console.error('Erro inesperado ao apagar pedido:', error);
@@ -413,7 +450,7 @@ export class SupabaseService {
   try {
     const session = await this.getSession();
 
-    const response = await fetch(`http://localhost:3000/pedidos/${id}`, {
+    const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -442,7 +479,7 @@ export class SupabaseService {
 
   async obterRecursos() {
   try {
-    const response = await fetch('http://localhost:3000/recursos?status=aprovado');
+    const response = await fetch(`${this.apiUrl}/recursos?status=aprovado`);
     const data = await response.json();
     return data?.data || [];
   } catch (error: any) {
