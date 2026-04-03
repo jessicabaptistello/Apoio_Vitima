@@ -35,7 +35,7 @@ Este projeto facilita o acesso a informação essencial para vítimas encontrare
 ## Demonstração
 
 ### Homepage
-![Homepage](./home.png)
+![Homepage](./home1.png)
 ![Homepage](./home2.png)
 ![Homepage](./home3.png)
 
@@ -53,8 +53,8 @@ Este projeto facilita o acesso a informação essencial para vítimas encontrare
 ![Dashboard](./dashboard5.png)
 
 ### Recursos
-![Recursos](./recursos1.png)
-![Recursos](./recursos2.png)
+![Recursos](./recurso1.png)
+![Recursos](./recurso2.png)
 
 ### DarkMode
 ![DarkMode](./darkmode.png)
