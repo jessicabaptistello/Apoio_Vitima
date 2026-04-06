@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule, NgForm } from '@angular/forms';
-import { SupabaseService } from '../../services/supabase';
+import { Recurso, SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-apoio',
@@ -16,7 +16,7 @@ export class ApoioComponent implements OnInit {
   filtroTipo = '';
   pesquisa = '';
 
-  recursos: any[] = [];
+  recursos: Recurso[] = [];
   carregando = true;
   enviandoSugestao = false;
 
@@ -40,30 +40,30 @@ export class ApoioComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  async ngOnInit() {
+  async ngOnInit(): Promise<void> {
     await this.carregarRecursos();
   }
 
-  abrirModal(titulo: string, mensagem: string) {
+  abrirModal(titulo: string, mensagem: string): void {
     this.modalTitle = titulo;
     this.modalMessage = mensagem;
     this.modalOpen = true;
     this.cdr.detectChanges();
   }
 
-  fecharModal() {
+  fecharModal(): void {
     this.modalOpen = false;
     this.modalTitle = '';
     this.modalMessage = '';
     this.cdr.detectChanges();
   }
 
-  async carregarRecursos() {
+  async carregarRecursos(): Promise<void> {
     this.carregando = true;
     this.cdr.detectChanges();
 
     try {
-      this.recursos = await this.supabaseService.obterRecursos();
+      this.recursos = (await this.supabaseService.obterRecursos()) ?? [];
     } catch (error) {
       console.error('Erro ao carregar recursos:', error);
       this.recursos = [];
@@ -78,7 +78,7 @@ export class ApoioComponent implements OnInit {
     return [...new Set(tipos)].sort();
   }
 
-  get recursosFiltrados() {
+  get recursosFiltrados(): Recurso[] {
     const distrito = this.filtroDistrito.trim().toLowerCase();
     const tipo = this.filtroTipo.trim().toLowerCase();
     const termo = this.pesquisa.trim().toLowerCase();
@@ -116,7 +116,7 @@ export class ApoioComponent implements OnInit {
     return (valor || '').replace(/\D/g, '');
   }
 
-  async sugerirNovoRecurso(form?: NgForm) {
+  async sugerirNovoRecurso(form?: NgForm): Promise<void> {
     if (this.enviandoSugestao) return;
 
     const nome = this.novoRecurso.nome.trim();

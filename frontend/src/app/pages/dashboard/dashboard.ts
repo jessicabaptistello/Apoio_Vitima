@@ -2,8 +2,18 @@ import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthChangeEvent, Session, Subscription, User } from '@supabase/supabase-js';
 import { SaudacaoPipe } from '../../saudacao-pipe';
-import { SupabaseService } from '../../services/supabase';
+import { Pedido, Recurso, SupabaseService } from '../../services/supabase';
+
+interface PedidoEdicao {
+  id: string | number;
+  email: string;
+  tipo_pedido: string;
+  contacto: string;
+  distrito: string;
+  descricao: string;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -19,16 +29,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isDarkMode = false;
 
-  pedidos: any[] = [];
-  recursosPendentes: any[] = [];
-  recursosAprovados: any[] = [];
+  pedidos: Pedido[] = [];
+  recursosPendentes: Recurso[] = [];
+  recursosAprovados: Recurso[] = [];
 
-  private authSubscription: any;
+  private authSubscription: Subscription | null = null;
 
-  recursoSelecionadoPorPedido: Record<number, number | null> = {};
+  recursoSelecionadoPorPedido: Record<string, number | string | null> = {};
 
-  pedidoEmEdicaoId: number | null = null;
-  pedidoEditando: any = null;
+  pedidoEmEdicaoId: string | number | null = null;
+  pedidoEditando: PedidoEdicao = {
+  id: '',
+  email: '',
+  tipo_pedido: '',
+  contacto: '',
+  distrito: '',
+  descricao: ''
+};
   pedidoEditandoSubmitting = false;
 
   novoPedido = {
@@ -128,7 +145,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private router: Router
   ) {}
 
-  async ngOnInit() {
+  async ngOnInit(): Promise<void> {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       this.isDarkMode = true;
@@ -138,21 +155,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     await this.supabaseService.garantirSessaoPronta();
     await this.inicializarDashboard();
 
-    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        await this.inicializarDashboard();
-      } else if (event === 'SIGNED_OUT') {
-        this.nomeutilizador = 'Utilizador';
-        this.isAdmin = false;
-        this.pedidos = [];
-        this.recursosPendentes = [];
-        this.recursosAprovados = [];
-        this.recursoSelecionadoPorPedido = {};
-        this.cancelarEdicaoPedido(false);
-      }
+    const { data } = this.supabaseService.supabase.auth.onAuthStateChange(
+      async (event: AuthChangeEvent, session: Session | null) => {
+        if (session?.user) {
+          await this.inicializarDashboard();
+        } else if (event === 'SIGNED_OUT') {
+          this.nomeutilizador = 'Utilizador';
+          this.isAdmin = false;
+          this.pedidos = [];
+          this.recursosPendentes = [];
+          this.recursosAprovados = [];
+          this.recursoSelecionadoPorPedido = {};
+          this.cancelarEdicaoPedido(false);
+        }
 
-      this.cdr.detectChanges();
-    });
+        this.cdr.detectChanges();
+      }
+    );
 
     this.authSubscription = data.subscription;
   }
@@ -171,13 +190,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     if (this.authSubscription) {
       this.authSubscription.unsubscribe();
     }
   }
 
-  async inicializarDashboard() {
+  async inicializarDashboard(): Promise<void> {
     await this.carregarUsuario();
     await this.carregarPedidos();
 
@@ -189,45 +208,47 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  async carregarUsuario() {
+  async carregarUsuario(): Promise<void> {
     const user = await this.supabaseService.getUser();
 
     if (!user) {
       return;
     }
 
-    const metadata = user.user_metadata || {};
+    const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
     console.log('USER METADATA:', metadata);
     console.log('ROLE:', metadata['role']);
 
-    this.nomeutilizador = metadata['full_name'] || user.email || 'Utilizador';
-    this.isAdmin = (metadata['role'] ?? '') === 'admin';
+    this.nomeutilizador = String(metadata['full_name'] ?? user.email ?? 'Utilizador');
+    this.isAdmin = String(metadata['role'] ?? '') === 'admin';
 
     if (!this.novoPedido.email) {
       this.novoPedido.email = user.email || '';
     }
   }
 
-  async carregarPedidos() {
+  async carregarPedidos(): Promise<void> {
     const pedidos = await this.supabaseService.obterPedidos();
 
     if (!Array.isArray(pedidos)) {
       return;
     }
 
-    this.pedidos = pedidos.map((pedido: any) => ({
+    this.pedidos = pedidos.map((pedido) => ({
       ...pedido,
       status: pedido.status || 'Pendente'
     }));
 
     this.recursoSelecionadoPorPedido = {};
 
-    this.pedidos.forEach((pedido: any) => {
-      this.recursoSelecionadoPorPedido[pedido.id] = pedido.recurso_id || null;
+    this.pedidos.forEach((pedido) => {
+      this.recursoSelecionadoPorPedido[String(pedido.id)] = pedido.recurso_id || null;
     });
 
-    if (this.pedidoEmEdicaoId) {
-      const pedidoAtualizado = this.pedidos.find((p: any) => p.id === this.pedidoEmEdicaoId);
+    if (this.pedidoEmEdicaoId !== null) {
+      const pedidoAtualizado = this.pedidos.find(
+        (p) => String(p.id) === String(this.pedidoEmEdicaoId)
+      );
 
       if (!pedidoAtualizado || !this.podeEditarPedido(pedidoAtualizado)) {
         this.cancelarEdicaoPedido(false);
@@ -235,7 +256,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async carregarRecursosPendentes() {
+  async carregarRecursosPendentes(): Promise<void> {
     const recursos = await this.supabaseService.obterRecursosPendentes();
 
     if (!Array.isArray(recursos)) {
@@ -245,7 +266,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recursosPendentes = recursos;
   }
 
-  async carregarRecursosAprovados() {
+  async carregarRecursosAprovados(): Promise<void> {
     const recursos = await this.supabaseService.obterRecursos();
 
     if (!Array.isArray(recursos)) {
@@ -255,14 +276,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.recursosAprovados = recursos;
   }
 
-  setSection(section: string) {
-  if (this.isAdmin && section === 'meus-pedidos') {
-    this.activeSection = 'todos-pedidos';
-    return;
-  }
+  setSection(section: string): void {
+    if (this.isAdmin && section === 'meus-pedidos') {
+      this.activeSection = 'todos-pedidos';
+      return;
+    }
 
-  this.activeSection = section;
-
+    this.activeSection = section;
 
     if (section === 'meus-pedidos' || section === 'todos-pedidos' || section === 'status') {
       this.carregarPedidos().then(() => this.cdr.detectChanges());
@@ -277,7 +297,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  abrirModalAlerta(titulo: string, mensagem: string) {
+  abrirModalAlerta(titulo: string, mensagem: string): void {
     this.modalTitle = titulo;
     this.modalMessage = mensagem;
     this.modalMode = 'alert';
@@ -295,7 +315,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  fecharModal() {
+  fecharModal(): void {
     this.modalOpen = false;
     this.modalTitle = '';
     this.modalMessage = '';
@@ -307,7 +327,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  confirmarModal() {
+  confirmarModal(): void {
     this.modalOpen = false;
 
     if (this.modalResolver) {
@@ -316,143 +336,145 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  async enviarPedido(form?: NgForm) {
-  if (this.isAdmin) {
-  this.abrirModalAlerta('Ação não permitida', 'Administradores não podem criar pedidos.');
-  return;
-}
-
-  const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
-  const emailLimpo = (email || '').trim();
-  const tipoLimpo = (tipo_pedido || '').trim();
-  const contactoLimpo = (contacto || '').trim();
-  const descricaoLimpa = (descricao || '').trim();
-
-  if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distrito || !descricaoLimpa) {
-    this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido de ajuda.');
-    return;
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
-    this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
-    return;
-  }
-
-  if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
-    this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter pelo menos 9 dígitos.');
-    return;
-  }
-
-  if (descricaoLimpa.length < 10) {
-    this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
-    return;
-  }
-
-  this.pedidoSubmitting = true;
-
-  try {
-    const user = await this.supabaseService.getUser();
-
-    if (!user) {
-      this.abrirModalAlerta('Sessão inválida', 'Tem de iniciar sessão para enviar um pedido.');
+  async enviarPedido(form?: NgForm): Promise<void> {
+    if (this.isAdmin) {
+      this.abrirModalAlerta('Ação não permitida', 'Administradores não podem criar pedidos.');
       return;
     }
 
-    const { data, error } = await this.supabaseService.criarPedido({
-      user_id: user.id,
-      email: emailLimpo,
-      tipo_pedido: tipoLimpo,
-      contacto: contactoLimpo,
-      distrito,
-      descricao: descricaoLimpa
-    });
+    const { email, tipo_pedido, contacto, distrito, descricao } = this.novoPedido;
+    const emailLimpo = (email || '').trim();
+    const tipoLimpo = (tipo_pedido || '').trim();
+    const contactoLimpo = (contacto || '').trim();
+    const descricaoLimpa = (descricao || '').trim();
 
-    if (error) {
-      this.abrirModalAlerta('Erro ao enviar pedido', error.message);
+    if (!emailLimpo || !tipoLimpo || !contactoLimpo || !distrito || !descricaoLimpa) {
+      this.abrirModalAlerta('Campos obrigatórios', 'Preencha todos os campos do pedido de ajuda.');
       return;
     }
 
-    const pedidoCriado = Array.isArray(data) ? data[0] : null;
-
-    if (pedidoCriado) {
-      this.pedidos = [
-        { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
-        ...this.pedidos
-      ];
-      this.recursoSelecionadoPorPedido[pedidoCriado.id] = pedidoCriado.recurso_id || null;
-    } else {
-      await this.carregarPedidos();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+      this.abrirModalAlerta('Email inválido', 'Introduza um email válido.');
+      return;
     }
 
-    this.novoPedido = {
-      email: emailLimpo,
-      tipo_pedido: '',
-      contacto: '',
-      distrito: '',
-      descricao: ''
-    };
-
-    if (form) {
-      form.resetForm({ email: emailLimpo });
+    if (!/^[0-9]{9,15}$/.test(contactoLimpo)) {
+      this.abrirModalAlerta('Contacto inválido', 'O contacto deve conter apenas números e ter pelo menos 9 dígitos.');
+      return;
     }
 
-    this.activeSection = 'meus-pedidos';
-    this.cdr.detectChanges();
-    this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
-  } finally {
-    this.pedidoSubmitting = false;
+    if (descricaoLimpa.length < 10) {
+      this.abrirModalAlerta('Descrição inválida', 'A descrição deve ter no mínimo 10 caracteres.');
+      return;
+    }
+
+    this.pedidoSubmitting = true;
+
+    try {
+      const user: User | null = await this.supabaseService.getUser();
+
+      if (!user) {
+        this.abrirModalAlerta('Sessão inválida', 'Tem de iniciar sessão para enviar um pedido.');
+        return;
+      }
+
+      const { data, error } = await this.supabaseService.criarPedido({
+        user_id: user.id,
+        email: emailLimpo,
+        tipo_pedido: tipoLimpo,
+        contacto: contactoLimpo,
+        distrito,
+        descricao: descricaoLimpa,
+        id: '',
+        status: 'Pendente'
+      });
+
+      if (error) {
+        this.abrirModalAlerta('Erro ao enviar pedido', error.message);
+        return;
+      }
+
+      const pedidoCriado = Array.isArray(data) ? data[0] : null;
+
+      if (pedidoCriado) {
+        this.pedidos = [
+          { ...pedidoCriado, status: pedidoCriado.status || 'Pendente' },
+          ...this.pedidos
+        ];
+        this.recursoSelecionadoPorPedido[String(pedidoCriado.id)] = pedidoCriado.recurso_id || null;
+      } else {
+        await this.carregarPedidos();
+      }
+
+      this.novoPedido = {
+        email: emailLimpo,
+        tipo_pedido: '',
+        contacto: '',
+        distrito: '',
+        descricao: ''
+      };
+
+      if (form) {
+        form.resetForm({ email: emailLimpo });
+      }
+
+      this.activeSection = 'meus-pedidos';
+      this.cdr.detectChanges();
+      this.abrirModalAlerta('Sucesso', 'Pedido enviado com sucesso!');
+    } finally {
+      this.pedidoSubmitting = false;
+    }
   }
-}
 
-  verDetalhePedido(pedido: any) {
+  verDetalhePedido(pedido: Pedido): void {
     this.router.navigate(['/pedido', pedido.id]);
   }
 
-  async fazerLogout(event?: Event) {
-  event?.preventDefault();
+  async fazerLogout(event?: Event): Promise<void> {
+    event?.preventDefault();
 
-  const confirmar = await this.abrirModalConfirmacao(
-    'Confirmar logout',
-    'Tem a certeza que deseja terminar a sessão?'
-  );
-
-  if (!confirmar) return;
-
-  const resultado = await this.supabaseService.signOut();
-
-  if (resultado?.error) {
-    await this.abrirModalAlerta(
-      'Erro ao terminar sessão',
-      resultado.error.message || 'Não foi possível terminar a sessão.'
+    const confirmar = await this.abrirModalConfirmacao(
+      'Confirmar logout',
+      'Tem a certeza que deseja terminar a sessão?'
     );
-    return;
+
+    if (!confirmar) return;
+
+    const resultado = await this.supabaseService.signOut();
+
+    if (resultado?.error) {
+      this.abrirModalAlerta(
+        'Erro ao terminar sessão',
+        resultado.error.message || 'Não foi possível terminar a sessão.'
+      );
+      return;
+    }
+
+    this.nomeutilizador = 'Utilizador';
+    this.isAdmin = false;
+    this.pedidos = [];
+    this.recursosPendentes = [];
+    this.recursosAprovados = [];
+    this.recursoSelecionadoPorPedido = {};
+    this.cancelarEdicaoPedido(false);
+    this.activeSection = 'info';
+
+    await this.router.navigate(['/login']);
   }
 
-  this.nomeutilizador = 'Utilizador';
-  this.isAdmin = false;
-  this.pedidos = [];
-  this.recursosPendentes = [];
-  this.recursosAprovados = [];
-  this.recursoSelecionadoPorPedido = {};
-  this.cancelarEdicaoPedido(false);
-  this.activeSection = 'info';
-
-  await this.router.navigate(['/login']);
-}
-
-  saidaRapida(event: Event) {
+  saidaRapida(event: Event): void {
     event.preventDefault();
     window.location.replace('https://www.google.pt');
   }
 
-  podeEditarPedido(pedido: any): boolean {
+  podeEditarPedido(pedido: Pedido | null | undefined): boolean {
     if (!pedido) return false;
     if (this.isAdmin) return false;
 
-    return (pedido.status || '').trim().toLowerCase() === 'pendente';
+    return String(pedido.status || '').trim().toLowerCase() === 'pendente';
   }
 
-  iniciarEdicaoPedido(pedido: any) {
+  iniciarEdicaoPedido(pedido: Pedido): void {
     if (!this.podeEditarPedido(pedido)) return;
 
     this.pedidoEmEdicaoId = pedido.id;
@@ -468,19 +490,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  cancelarEdicaoPedido(confirmarCancelamento = true) {
+  cancelarEdicaoPedido(confirmarCancelamento = true): void {
     if (confirmarCancelamento && this.pedidoEmEdicaoId) {
       this.abrirModalAlerta('Edição cancelada', 'As alterações não guardadas foram descartadas.');
     }
 
     this.pedidoEmEdicaoId = null;
-    this.pedidoEditando = null;
+    this.pedidoEditando = {
+  id: '',
+  email: '',
+  tipo_pedido: '',
+  contacto: '',
+  distrito: '',
+  descricao: ''
+};
     this.pedidoEditandoSubmitting = false;
     this.cdr.detectChanges();
   }
 
-  async guardarEdicaoPedido() {
-    if (!this.pedidoEditando || !this.pedidoEmEdicaoId) return;
+  async guardarEdicaoPedido(): Promise<void> {
+    if (!this.pedidoEmEdicaoId) return;
     if (this.pedidoEditandoSubmitting) return;
 
     const emailLimpo = (this.pedidoEditando.email || '').trim();
@@ -509,7 +538,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const pedidoOriginal = this.pedidos.find((p: any) => p.id === this.pedidoEmEdicaoId);
+    const pedidoOriginal = this.pedidos.find(
+      (p) => String(p.id) === String(this.pedidoEmEdicaoId)
+    );
 
     if (!pedidoOriginal || !this.podeEditarPedido(pedidoOriginal)) {
       this.abrirModalAlerta('Edição não permitida', 'Este pedido já não pode ser editado.');
@@ -520,13 +551,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.pedidoEditandoSubmitting = true;
 
     try {
-      const { error } = await this.supabaseService.atualizarPedidoUtilizador(String(this.pedidoEmEdicaoId), {
-        email: emailLimpo,
-        tipo_pedido: tipoLimpo,
-        contacto: contactoLimpo,
-        distrito: distritoLimpo,
-        descricao: descricaoLimpa
-      });
+      const { error } = await this.supabaseService.atualizarPedidoUtilizador(
+        String(this.pedidoEmEdicaoId),
+        {
+          email: emailLimpo,
+          tipo_pedido: tipoLimpo,
+          contacto: contactoLimpo,
+          distrito: distritoLimpo,
+          descricao: descricaoLimpa
+        }
+      );
 
       if (error) {
         this.abrirModalAlerta('Erro ao editar pedido', error.message);
@@ -542,11 +576,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
- async apagarPedido(pedidoOuId: any) {
-  const id =
-    typeof pedidoOuId === 'object' && pedidoOuId !== null
+  async apagarPedido(
+  pedidoOuId: Pedido | string | number | { id?: string | number | null }
+): Promise<void> {
+  const idBruto =
+    typeof pedidoOuId === 'object' && pedidoOuId !== null && 'id' in pedidoOuId
       ? pedidoOuId.id
       : pedidoOuId;
+
+  if (idBruto === null || typeof idBruto === 'undefined' || String(idBruto).trim() === '') {
+    this.abrirModalAlerta(
+      'Erro ao apagar pedido',
+      'ID inválido para apagar o pedido.'
+    );
+    return;
+  }
+
+  const id = idBruto;
 
   console.log('ID recebido para apagar:', id, 'valor original:', pedidoOuId);
 
@@ -569,46 +615,48 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return;
   }
 
-  this.pedidos = this.pedidos.filter((p: any) => String(p.id) !== String(id));
+  this.pedidos = this.pedidos.filter((p) => String(p.id) !== String(id));
   this.cdr.detectChanges();
 
   this.abrirModalAlerta('Sucesso', 'Pedido apagado com sucesso.');
 }
 
-  async atualizarStatusPedido(pedido: any, novoStatus: string) {
-  const resultado = await this.supabaseService.atualizarStatusPedido(
-    pedido.id,
-    novoStatus
-  );
-
-  if (resultado?.error) {
-    await this.abrirModalAlerta(
-      'Erro ao atualizar pedido',
-      resultado.error.message || 'Não foi possível atualizar o pedido.'
+  async atualizarStatusPedido(pedido: Pedido, novoStatus: string): Promise<void> {
+    const resultado = await this.supabaseService.atualizarStatusPedido(
+      pedido.id,
+      novoStatus
     );
-    return;
+
+    if (resultado?.error) {
+      this.abrirModalAlerta(
+        'Erro ao atualizar pedido',
+        resultado.error.message || 'Não foi possível atualizar o pedido.'
+      );
+      return;
+    }
+
+    this.abrirModalAlerta(
+      'Status atualizado',
+      'O status do pedido foi atualizado com sucesso.'
+    );
+
+    pedido.status = novoStatus;
+    await this.carregarPedidos();
   }
 
-  await this.abrirModalAlerta(
-  'Status atualizado',
-  'O status do pedido foi atualizado com sucesso.'
-);
-
-  pedido.status = novoStatus;
-  await this.carregarPedidos();
-}
-
-  async encaminharPedido(pedido: any) {
+  async encaminharPedido(pedido: Pedido): Promise<void> {
     if (!this.isAdmin) return;
 
-    const recursoId = this.recursoSelecionadoPorPedido[pedido.id];
+    const recursoId = this.recursoSelecionadoPorPedido[String(pedido.id)];
 
     if (!recursoId) {
       this.abrirModalAlerta('Recurso obrigatório', 'Selecione um recurso antes de encaminhar.');
       return;
     }
 
-    const recurso = this.recursosAprovados.find((r: any) => r.id === Number(recursoId));
+    const recurso = this.recursosAprovados.find(
+      (r) => String(r.id) === String(recursoId)
+    );
 
     if (!recurso) {
       this.abrirModalAlerta('Erro', 'Recurso não encontrado.');
@@ -635,7 +683,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.abrirModalAlerta('Sucesso', 'Pedido encaminhado com sucesso!');
   }
 
-  obterLinkEmailSimulado(pedido: any): string {
+  obterLinkEmailSimulado(pedido: Pedido): string {
     const assunto = encodeURIComponent('Encaminhamento de pedido de apoio');
     const corpo = encodeURIComponent(
       pedido.mensagem_encaminhamento ||
@@ -645,7 +693,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return `mailto:${pedido.email}?subject=${assunto}&body=${corpo}`;
   }
 
-  verMensagemEmail(pedido: any) {
+  verMensagemEmail(pedido: Pedido): void {
     const mensagem =
       pedido.mensagem_encaminhamento ||
       `O seu pedido foi encaminhado para ${pedido.recurso_nome || 'um recurso de apoio'}.`;
@@ -656,11 +704,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     );
   }
 
-  isStatusBloqueado(pedido: any): boolean {
+  isStatusBloqueado(pedido: Pedido): boolean {
     return pedido.status === 'Concluído';
   }
 
-  async aprovarRecurso(recurso: any) {
+  async aprovarRecurso(recurso: Recurso): Promise<void> {
     if (!this.isAdmin) return;
 
     const confirmar = await this.abrirModalConfirmacao(
@@ -682,7 +730,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.abrirModalAlerta('Sucesso', 'Recurso aprovado com sucesso!');
   }
 
-  async rejeitarRecurso(recurso: any) {
+  async rejeitarRecurso(recurso: Recurso): Promise<void> {
     if (!this.isAdmin) return;
 
     const confirmar = await this.abrirModalConfirmacao(
@@ -704,11 +752,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.abrirModalAlerta('Sucesso', 'Recurso rejeitado com sucesso!');
   }
 
-  toggleGuia(itemId: string) {
+  toggleGuia(itemId: string): void {
     this.guiaAberto = this.guiaAberto === itemId ? null : itemId;
   }
 
-  executarAcaoGuia(acao: string) {
+  executarAcaoGuia(acao: string): void {
     if (acao === 'Fazer pedido de ajuda' || acao === 'Ir para pedido') {
       this.setSection('info');
       this.cdr.detectChanges();

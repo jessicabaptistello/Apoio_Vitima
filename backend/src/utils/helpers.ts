@@ -1,10 +1,46 @@
 import type { Response } from 'express';
 
-export const STATUS_PEDIDOS_VALIDOS = ['Pendente', 'Em análise', 'Encaminhado', 'Concluído'];
+export const STATUS_PEDIDOS_VALIDOS = [
+  'Pendente',
+  'Em análise',
+  'Encaminhado',
+  'Concluído'
+] as const;
 
-export const STATUS_RECURSOS_VALIDOS = ['Pendente', 'Aprovado', 'Rejeitado', 'Ativo', 'Inativo'];
+export const STATUS_RECURSOS_VALIDOS = [
+  'Pendente',
+  'Aprovado',
+  'Rejeitado',
+  'Ativo',
+  'Inativo'
+] as const;
 
-export function respostaErro(res: Response, status: number, mensagem: string, detalhe?: any) {
+type RespostaErroDetalhe = unknown;
+
+type PedidoBody = {
+  email?: unknown;
+  tipo_pedido?: unknown;
+  contacto?: unknown;
+  distrito?: unknown;
+  descricao?: unknown;
+  status?: unknown;
+};
+
+type RecursoBody = {
+  nome?: unknown;
+  tipo?: unknown;
+  contacto?: unknown;
+  distrito?: unknown;
+  descricao?: unknown;
+  status?: unknown;
+};
+
+export function respostaErro(
+  res: Response,
+  status: number,
+  mensagem: string,
+  detalhe?: RespostaErroDetalhe
+) {
   return res.status(status).json({
     success: false,
     message: mensagem,
@@ -12,7 +48,12 @@ export function respostaErro(res: Response, status: number, mensagem: string, de
   });
 }
 
-export function respostaSucesso(res: Response, status: number, mensagem: string, data?: any) {
+export function respostaSucesso<T>(
+  res: Response,
+  status: number,
+  mensagem: string,
+  data?: T
+) {
   return res.status(status).json({
     success: true,
     message: mensagem,
@@ -30,14 +71,14 @@ export async function executarComTimeout<T>(
     }, timeoutMs);
   });
 
-  return Promise.race([Promise.resolve(operacao as T), timeoutPromise]);
+  return Promise.race([Promise.resolve(operacao), timeoutPromise]);
 }
 
-export function textoValido(valor: any, minimo = 1) {
+export function textoValido(valor: unknown, minimo = 1): boolean {
   return typeof valor === 'string' && valor.trim().length >= minimo;
 }
 
-export function validarPedido(body: any) {
+export function validarPedido(body: PedidoBody): string[] {
   const erros: string[] = [];
 
   if (!textoValido(body.email)) erros.push('email é obrigatório');
@@ -51,7 +92,7 @@ export function validarPedido(body: any) {
   return erros;
 }
 
-export function validarRecurso(body: any, exigirStatus = false) {
+export function validarRecurso(body: RecursoBody, exigirStatus = false): string[] {
   const erros: string[] = [];
 
   if (!textoValido(body.nome)) erros.push('nome é obrigatório');
@@ -65,7 +106,11 @@ export function validarRecurso(body: any, exigirStatus = false) {
   if (exigirStatus) {
     if (!textoValido(body.status)) {
       erros.push('status é obrigatório');
-    } else if (!STATUS_RECURSOS_VALIDOS.includes(body.status)) {
+    } else if (
+      !STATUS_RECURSOS_VALIDOS.includes(
+        body.status as (typeof STATUS_RECURSOS_VALIDOS)[number]
+      )
+    ) {
       erros.push(`status inválido. Use: ${STATUS_RECURSOS_VALIDOS.join(', ')}`);
     }
   }

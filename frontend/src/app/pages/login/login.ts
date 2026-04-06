@@ -113,9 +113,11 @@ export class LoginComponent {
       this.successMessage = 'Entrada efetuada com sucesso.';
       this.cdr.detectChanges();
       await this.router.navigate(['/dashboard']);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado no login:', error);
-      this.errorMessage = this.traduzirErroLogin(error?.message || '');
+      this.errorMessage = this.traduzirErroLogin(
+  error instanceof Error ? error.message : ''
+);
     } finally {
       this.loadingLogin = false;
       this.cdr.detectChanges();
@@ -171,10 +173,12 @@ export class LoginComponent {
 
       this.successMessage = 'Conta criada com sucesso. Agora pode clicar em "Entrar".';
       this.password = '';
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado ao criar conta:', error);
 
-      const mensagem = this.traduzirErroRegisto(error?.message || '');
+      const mensagem = this.traduzirErroLogin(
+  error instanceof Error ? error.message : ''
+);
 
       if (
         mensagem.toLowerCase().includes('a conta pode ter sido criada com sucesso') ||

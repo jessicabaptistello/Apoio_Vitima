@@ -19,48 +19,62 @@
       Recurso não encontrado.
     </div>
 
-    <section *ngIf="!carregando && recurso" class="detalhe-card">
+    <section *ngIf="!carregando && recurso as recursoAtual" class="detalhe-card">
       <span class="eyebrow">DETALHE DO RECURSO</span>
 
       <div class="card-top">
-        <span class="district-badge">{{ recurso.distrito }}</span>
-        <h2>{{ recurso.nome }}</h2>
+        <span class="district-badge">{{ recursoAtual.distrito }}</span>
+        <h2>{{ recursoAtual.nome }}</h2>
       </div>
 
       <div class="info-grid">
         <div class="info-item">
           <span class="label">Tipo de apoio</span>
-          <p>{{ recurso.tipo }}</p>
+          <p>{{ recursoAtual.tipo }}</p>
         </div>
 
         <div class="info-item">
           <span class="label">Contacto</span>
           <p>
-            <a [href]="'tel:' + recurso.contacto">{{ recurso.contacto }}</a>
+            <a [href]="'tel:' + recursoAtual.contacto">{{ recursoAtual.contacto }}</a>
           </p>
         </div>
 
         <div class="info-item">
           <span class="label">Website</span>
-          <p>
-            <a [href]="recurso.website" target="_blank">{{ recurso.website }}</a>
+          <p *ngIf="recursoAtual.website; else semWebsite">
+            <a [href]="recursoAtual.website" target="_blank" rel="noopener noreferrer">
+              {{ recursoAtual.website }}
+            </a>
           </p>
+          <ng-template #semWebsite>
+            <p>Não disponível</p>
+          </ng-template>
         </div>
 
         <div class="info-item">
           <span class="label">Distrito</span>
-          <p>{{ recurso.distrito }}</p>
+          <p>{{ recursoAtual.distrito }}</p>
         </div>
       </div>
 
       <div class="descricao-box">
         <span class="label">Descrição</span>
-        <p>{{ recurso.descricao || 'Sem descrição disponível.' }}</p>
+        <p>{{ recursoAtual.descricao || 'Sem descrição disponível.' }}</p>
       </div>
 
       <div class="acoes">
-        <a [href]="'tel:' + recurso.contacto" class="btn-top">Contactar</a>
-        <!-- <a [href]="recurso.website" target="_blank" class="btn-outline">Visitar website</a> -->
+        <a [href]="'tel:' + recursoAtual.contacto" class="btn-top">Contactar</a>
+
+        <!-- <a
+          *ngIf="recursoAtual.website"
+          [href]="recursoAtual.website"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn-outline"
+        >
+          Visitar website
+        </a> -->
       </div>
     </section>
   </main>
