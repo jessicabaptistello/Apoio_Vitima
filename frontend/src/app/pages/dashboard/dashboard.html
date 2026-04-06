@@ -8,9 +8,9 @@
       {{ isDarkMode ? '☀️' : '🌙' }}
     </button>
 
-   <button type="button" (click)="fazerLogout($event)" class="top-action-btn">
-  LOGOUT
-</button>
+    <button type="button" (click)="fazerLogout($event)" class="top-action-btn">
+      LOGOUT
+    </button>
 
     <a
       href="https://www.google.pt"
@@ -85,7 +85,7 @@
       </div>
     </section>
 
-    <section *ngIf="activeSection === 'guia'"class="centered-content">
+    <section *ngIf="activeSection === 'guia'" class="centered-content">
       <h2 class="section-title">Guia de Ajuda</h2>
 
       <div class="guia-header card">
@@ -133,126 +133,126 @@
         </article>
       </div>
     </section>
-    
- @if (!isAdmin) {
-  <section *ngIf="activeSection === 'info'" class="centered-content">
-    <div class="form-container">
-      <span class="eyebrow">NOVO PEDIDO</span>
-      <h2>Pedido de Ajuda</h2>
 
-      <form #pedidoForm="ngForm" (ngSubmit)="enviarPedido(pedidoForm)" novalidate>
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              [(ngModel)]="novoPedido.email"
-              #emailModel="ngModel"
+    @if (!isAdmin) {
+    <section *ngIf="activeSection === 'info'" class="centered-content">
+      <div class="form-container">
+        <span class="eyebrow">NOVO PEDIDO</span>
+        <h2>Pedido de Ajuda</h2>
+
+        <form #pedidoForm="ngForm" (ngSubmit)="enviarPedido(pedidoForm)" novalidate>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                [(ngModel)]="novoPedido.email"
+                #emailModel="ngModel"
+                required
+                email
+                [class.invalid-field]="emailModel.invalid && (emailModel.dirty || emailModel.touched || pedidoForm.submitted)"
+                [class.valid-field]="emailModel.valid && (emailModel.dirty || emailModel.touched)"
+              />
+              <small class="validation-error" *ngIf="emailModel.invalid && (emailModel.dirty || emailModel.touched || pedidoForm.submitted)">
+                <span *ngIf="emailModel.errors?.['required']">O email é obrigatório.</span>
+                <span *ngIf="emailModel.errors?.['email']">O email deve ser válido.</span>
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Tipo de Pedido</label>
+              <select
+                name="tipo_pedido"
+                [(ngModel)]="novoPedido.tipo_pedido"
+                #tipoPedidoModel="ngModel"
+                required
+                [class.invalid-field]="tipoPedidoModel.invalid && (tipoPedidoModel.dirty || tipoPedidoModel.touched || pedidoForm.submitted)"
+                [class.valid-field]="tipoPedidoModel.valid && (tipoPedidoModel.dirty || tipoPedidoModel.touched)"
+              >
+                <option value="">Selecione</option>
+                <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                  {{ tipo }}
+                </option>
+              </select>
+              <small class="validation-error" *ngIf="tipoPedidoModel.invalid && (tipoPedidoModel.dirty || tipoPedidoModel.touched || pedidoForm.submitted)">
+                O tipo de apoio é obrigatório.
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Contacto</label>
+              <input
+                type="tel"
+                name="contacto"
+                [(ngModel)]="novoPedido.contacto"
+                #contactoModel="ngModel"
+                required
+                [pattern]="contactoPattern"
+                inputmode="numeric"
+                maxlength="15"
+                [class.invalid-field]="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || pedidoForm.submitted)"
+                [class.valid-field]="contactoModel.valid && (contactoModel.dirty || contactoModel.touched)"
+              />
+              <small class="validation-error" *ngIf="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || pedidoForm.submitted)">
+                <span *ngIf="contactoModel.errors?.['required']">O contacto é obrigatório.</span>
+                <span *ngIf="contactoModel.errors?.['pattern']">O contacto deve conter apenas números, com pelo menos 9 dígitos.</span>
+              </small>
+            </div>
+
+            <div class="form-group">
+              <label>Distrito</label>
+              <select
+                name="distrito"
+                [(ngModel)]="novoPedido.distrito"
+                #distritoModel="ngModel"
+                required
+                [class.invalid-field]="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || pedidoForm.submitted)"
+                [class.valid-field]="distritoModel.valid && (distritoModel.dirty || distritoModel.touched)"
+              >
+                <option value="">Selecione</option>
+                <option *ngFor="let distrito of distritos" [value]="distrito">
+                  {{ distrito }}
+                </option>
+              </select>
+              <small class="validation-error" *ngIf="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || pedidoForm.submitted)">
+                O distrito é obrigatório.
+              </small>
+            </div>
+          </div>
+
+          <div class="form-group descricao-group">
+            <label>Descrição</label>
+            <textarea
+              name="descricao"
+              [(ngModel)]="novoPedido.descricao"
+              #descricaoModel="ngModel"
               required
-              email
-              [class.invalid-field]="emailModel.invalid && (emailModel.dirty || emailModel.touched || pedidoForm.submitted)"
-              [class.valid-field]="emailModel.valid && (emailModel.dirty || emailModel.touched)"
-            />
-            <small class="validation-error" *ngIf="emailModel.invalid && (emailModel.dirty || emailModel.touched || pedidoForm.submitted)">
-              <span *ngIf="emailModel.errors?.['required']">O email é obrigatório.</span>
-              <span *ngIf="emailModel.errors?.['email']">O email deve ser válido.</span>
+              minlength="10"
+              [class.invalid-field]="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || pedidoForm.submitted)"
+              [class.valid-field]="descricaoModel.valid && (descricaoModel.dirty || descricaoModel.touched)"
+            ></textarea>
+            <small class="validation-error" *ngIf="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || pedidoForm.submitted)">
+              <span *ngIf="descricaoModel.errors?.['required']">A descrição é obrigatória.</span>
+              <span *ngIf="descricaoModel.errors?.['minlength']">A descrição deve ter pelo menos 10 caracteres.</span>
             </small>
           </div>
 
-          <div class="form-group">
-            <label>Tipo de Pedido</label>
-            <select
-              name="tipo_pedido"
-              [(ngModel)]="novoPedido.tipo_pedido"
-              #tipoPedidoModel="ngModel"
-              required
-              [class.invalid-field]="tipoPedidoModel.invalid && (tipoPedidoModel.dirty || tipoPedidoModel.touched || pedidoForm.submitted)"
-              [class.valid-field]="tipoPedidoModel.valid && (tipoPedidoModel.dirty || tipoPedidoModel.touched)"
-            >
-              <option value="">Selecione</option>
-              <option *ngFor="let tipo of tiposPedido" [value]="tipo">
-                {{ tipo }}
-              </option>
-            </select>
-            <small class="validation-error" *ngIf="tipoPedidoModel.invalid && (tipoPedidoModel.dirty || tipoPedidoModel.touched || pedidoForm.submitted)">
-              O tipo de apoio é obrigatório.
-            </small>
-          </div>
+          <button
+            type="submit"
+            class="btn-send"
+            [disabled]="pedidoSubmitting || pedidoForm.invalid"
+            [class.btn-send-enabled]="!(pedidoSubmitting || pedidoForm.invalid)"
+            [class.btn-send-disabled]="pedidoSubmitting || pedidoForm.invalid"
+          >
+            {{ pedidoSubmitting ? 'A enviar...' : 'Enviar Pedido' }}
+          </button>
+        </form>
+      </div>
+    </section>
+    }
 
-          <div class="form-group">
-            <label>Contacto</label>
-            <input
-              type="tel"
-              name="contacto"
-              [(ngModel)]="novoPedido.contacto"
-              #contactoModel="ngModel"
-              required
-              [pattern]="contactoPattern"
-              inputmode="numeric"
-              maxlength="15"
-              [class.invalid-field]="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || pedidoForm.submitted)"
-              [class.valid-field]="contactoModel.valid && (contactoModel.dirty || contactoModel.touched)"
-            />
-            <small class="validation-error" *ngIf="contactoModel.invalid && (contactoModel.dirty || contactoModel.touched || pedidoForm.submitted)">
-              <span *ngIf="contactoModel.errors?.['required']">O contacto é obrigatório.</span>
-              <span *ngIf="contactoModel.errors?.['pattern']">O contacto deve conter apenas números, com pelo menos 9 dígitos.</span>
-            </small>
-          </div>
-
-          <div class="form-group">
-            <label>Distrito</label>
-            <select
-              name="distrito"
-              [(ngModel)]="novoPedido.distrito"
-              #distritoModel="ngModel"
-              required
-              [class.invalid-field]="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || pedidoForm.submitted)"
-              [class.valid-field]="distritoModel.valid && (distritoModel.dirty || distritoModel.touched)"
-            >
-              <option value="">Selecione</option>
-              <option *ngFor="let distrito of distritos" [value]="distrito">
-                {{ distrito }}
-              </option>
-            </select>
-            <small class="validation-error" *ngIf="distritoModel.invalid && (distritoModel.dirty || distritoModel.touched || pedidoForm.submitted)">
-              O distrito é obrigatório.
-            </small>
-          </div>
-        </div>
-
-        <div class="form-group descricao-group">
-          <label>Descrição</label>
-          <textarea
-            name="descricao"
-            [(ngModel)]="novoPedido.descricao"
-            #descricaoModel="ngModel"
-            required
-            minlength="10"
-            [class.invalid-field]="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || pedidoForm.submitted)"
-            [class.valid-field]="descricaoModel.valid && (descricaoModel.dirty || descricaoModel.touched)"
-          ></textarea>
-          <small class="validation-error" *ngIf="descricaoModel.invalid && (descricaoModel.dirty || descricaoModel.touched || pedidoForm.submitted)">
-            <span *ngIf="descricaoModel.errors?.['required']">A descrição é obrigatória.</span>
-            <span *ngIf="descricaoModel.errors?.['minlength']">A descrição deve ter pelo menos 10 caracteres.</span>
-          </small>
-        </div>
-
-        <button
-          type="submit"
-          class="btn-send"
-          [disabled]="pedidoSubmitting || pedidoForm.invalid"
-          [class.btn-send-enabled]="!(pedidoSubmitting || pedidoForm.invalid)"
-          [class.btn-send-disabled]="pedidoSubmitting || pedidoForm.invalid"
-        >
-          {{ pedidoSubmitting ? 'A enviar...' : 'Enviar Pedido' }}
-        </button>
-      </form>
-    </div>
-  </section>
-}
-
-    <section *ngIf="activeSection === 'meus-pedidos' && !isAdmin "class="centered-content">
+    <section *ngIf="activeSection === 'meus-pedidos' && !isAdmin" class="centered-content">
       <h2 class="section-title">Os Meus Pedidos</h2>
 
       <div *ngIf="pedidos.length === 0" class="empty-state">
@@ -308,86 +308,88 @@
               </div>
 
               <ng-template #modoEdicaoPedido>
-                <div class="form-grid">
-                  <div class="form-group">
-                    <label>Email</label>
-                    <input
-                      type="email"
-                      name="editar_email_{{ pedido.id }}"
-                      [(ngModel)]="pedidoEditando.email"
-                    />
+                <div *ngIf="pedidoEmEdicaoId === pedido.id">
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label>Email</label>
+                      <input
+                        type="email"
+                        name="editar_email_{{ pedido.id }}"
+                        [(ngModel)]="pedidoEditando.email"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Tipo de Pedido</label>
+                      <select
+                        name="editar_tipo_{{ pedido.id }}"
+                        [(ngModel)]="pedidoEditando.tipo_pedido"
+                      >
+                        <option value="">Selecione</option>
+                        <option *ngFor="let tipo of tiposPedido" [value]="tipo">
+                          {{ tipo }}
+                        </option>
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Contacto</label>
+                      <input
+                        type="tel"
+                        name="editar_contacto_{{ pedido.id }}"
+                        [(ngModel)]="pedidoEditando.contacto"
+                        inputmode="numeric"
+                        maxlength="15"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Distrito</label>
+                      <select
+                        name="editar_distrito_{{ pedido.id }}"
+                        [(ngModel)]="pedidoEditando.distrito"
+                      >
+                        <option value="">Selecione</option>
+                        <option *ngFor="let distrito of distritos" [value]="distrito">
+                          {{ distrito }}
+                        </option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div class="form-group">
-                    <label>Tipo de Pedido</label>
-                    <select
-                      name="editar_tipo_{{ pedido.id }}"
-                      [(ngModel)]="pedidoEditando.tipo_pedido"
+                  <div class="form-group descricao-group">
+                    <label>Descrição</label>
+                    <textarea
+                      name="editar_descricao_{{ pedido.id }}"
+                      [(ngModel)]="pedidoEditando.descricao"
+                    ></textarea>
+                  </div>
+
+                  <div class="pedido-actions">
+                    <button
+                      type="button"
+                      class="editar"
+                      (click)="guardarEdicaoPedido()"
+                      [disabled]="pedidoEditandoSubmitting"
                     >
-                      <option value="">Selecione</option>
-                      <option *ngFor="let tipo of tiposPedido" [value]="tipo">
-                        {{ tipo }}
-                      </option>
-                    </select>
-                  </div>
+                      {{ pedidoEditandoSubmitting ? 'A guardar...' : 'Guardar alterações' }}
+                    </button>
 
-                  <div class="form-group">
-                    <label>Contacto</label>
-                    <input
-                      type="tel"
-                      name="editar_contacto_{{ pedido.id }}"
-                      [(ngModel)]="pedidoEditando.contacto"
-                      inputmode="numeric"
-                      maxlength="15"
-                    />
-                  </div>
-
-                  <div class="form-group">
-                    <label>Distrito</label>
-                    <select
-                      name="editar_distrito_{{ pedido.id }}"
-                      [(ngModel)]="pedidoEditando.distrito"
+                    <button
+                      type="button"
+                      class="btn-outline"
+                      (click)="cancelarEdicaoPedido()"
+                      [disabled]="pedidoEditandoSubmitting"
                     >
-                      <option value="">Selecione</option>
-                      <option *ngFor="let distrito of distritos" [value]="distrito">
-                        {{ distrito }}
-                      </option>
-                    </select>
+                      Cancelar
+                    </button>
                   </div>
-                </div>
-
-                <div class="form-group descricao-group">
-                  <label>Descrição</label>
-                  <textarea
-                    name="editar_descricao_{{ pedido.id }}"
-                    [(ngModel)]="pedidoEditando.descricao"
-                  ></textarea>
-                </div>
-
-                <div class="pedido-actions">
-                  <button
-                    type="button"
-                    class="editar"
-                    (click)="guardarEdicaoPedido()"
-                    [disabled]="pedidoEditandoSubmitting"
-                  >
-                    {{ pedidoEditandoSubmitting ? 'A guardar...' : 'Guardar alterações' }}
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn-outline"
-                    (click)="cancelarEdicaoPedido()"
-                    [disabled]="pedidoEditandoSubmitting"
-                  >
-                    Cancelar
-                  </button>
                 </div>
               </ng-template>
             </div>
 
             <div class="pedido-meta">
-              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              <span class="status" [ngClass]="getStatusClass(pedido.status || '')">
                 {{ pedido.status }}
               </span>
             </div>
@@ -435,7 +437,7 @@
             </div>
 
             <div class="pedido-meta admin-meta">
-              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              <span class="status" [ngClass]="getStatusClass(pedido.status || '')">
                 {{ pedido.status }}
               </span>
 
@@ -562,7 +564,7 @@
             </div>
 
             <div class="pedido-meta">
-              <span class="status" [ngClass]="getStatusClass(pedido.status)">
+              <span class="status" [ngClass]="getStatusClass(pedido.status || '')">
                 {{ pedido.status }}
               </span>
 

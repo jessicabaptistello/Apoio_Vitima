@@ -1,6 +1,87 @@
 import { Injectable } from '@angular/core';
-import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
+import {
+  AuthChangeEvent,
+  createClient,
+  Session,
+  SupabaseClient,
+  Subscription,
+  User
+} from '@supabase/supabase-js';
 import { environment } from '../../environments/environment.development';
+
+export interface Pedido {
+  id: string | number;
+  email: string;
+  tipo_pedido: string;
+  contacto: string;
+  distrito: string;
+  descricao: string;
+  status?: string;
+  user_id?: string;
+  recurso_id?: number | string | null;
+  recurso_nome?: string | null;
+  recurso_contacto?: string | null;
+  recurso_website?: string | null;
+  mensagem_encaminhamento?: string | null;
+  created_at?: string;
+}
+
+export interface Recurso {
+  id: string | number;
+  nome: string;
+  tipo: string;
+  contacto: string;
+  website?: string | null;
+  distrito: string;
+  descricao: string;
+  status?: string;
+  estado?: string;
+  aprovado?: boolean | string | number | null;
+  created_at?: string;
+}
+
+export interface UserProfile {
+  full_name: string;
+  role: string;
+  email: string;
+}
+
+interface AppError {
+  message: string;
+}
+
+interface AuthResponse<T> {
+  data: T | null;
+  error: AppError | null;
+}
+
+interface DeleteResponse {
+  error: AppError | null;
+}
+
+interface FetchApiResponse<T> {
+  data?: T;
+  message?: string;
+  detail?: {
+    message?: string;
+  } | string;
+}
+
+interface PedidoAtualizacaoUtilizador {
+  email: string;
+  tipo_pedido: string;
+  contacto: string;
+  distrito: string;
+  descricao: string;
+}
+
+interface EncaminhamentoPayload {
+  recurso_id: string | number;
+  recurso_nome: string;
+  recurso_contacto: string;
+  recurso_website?: string | null;
+  mensagem_encaminhamento: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -23,7 +104,7 @@ export class SupabaseService {
     );
   }
 
-  private async executarComTimeout<T = any>(
+  private async executarComTimeout<T>(
     operacao: PromiseLike<T>,
     timeoutMs = 15000
   ): Promise<T> {
@@ -34,25 +115,36 @@ export class SupabaseService {
     });
 
     return await Promise.race([
-      Promise.resolve(operacao as any),
+      Promise.resolve(operacao),
       timeoutPromise
     ]);
   }
 
-  private mensagemErro(error: any, fallback: string) {
+  private mensagemErro(error: unknown, fallback: string): AppError {
     if (!error) return { message: fallback };
     if (typeof error === 'string') return { message: error };
-    if (error.message) return { message: error.message };
+
+    if (error instanceof Error) {
+      return { message: error.message || fallback };
+    }
+
+    if (typeof error === 'object' && error !== null && 'message' in error) {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === 'string' && message.trim()) {
+        return { message };
+      }
+    }
+
     return { message: fallback };
   }
 
-  private normalizarBoolean(valor: any): boolean | null {
+  private normalizarBoolean(valor: unknown): boolean | null {
     if (valor === true || valor === 'true' || valor === 1 || valor === '1') return true;
     if (valor === false || valor === 'false' || valor === 0 || valor === '0') return false;
     return null;
   }
 
-  private recursoEstaAprovado(recurso: any): boolean {
+  private recursoEstaAprovado(recurso: Recurso): boolean {
     const aprovado = this.normalizarBoolean(recurso?.aprovado);
     if (aprovado === true) return true;
     if (aprovado === false) return false;
@@ -66,7 +158,7 @@ export class SupabaseService {
     return true;
   }
 
-  private recursoEstaPendente(recurso: any): boolean {
+  private recursoEstaPendente(recurso: Recurso): boolean {
     const aprovado = this.normalizarBoolean(recurso?.aprovado);
     if (aprovado === false) return true;
     if (aprovado === true) return false;
@@ -88,9 +180,9 @@ export class SupabaseService {
     }
   }
 
-  async getSession() {
+  async getSession(): Promise<Session | null> {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase.auth.getSession(),
         8000
       );
@@ -116,13 +208,15 @@ export class SupabaseService {
     return await this.getUser();
   }
 
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(
+    callback: (event: AuthChangeEvent, session: Session | null) => void
+  ): { data: { subscription: Subscription } } {
     return this.supabase.auth.onAuthStateChange((event, session) => {
       callback(event, session);
     });
   }
 
-  async getUserProfile() {
+  async getUserProfile(): Promise<UserProfile> {
     try {
       const user = await this.getUser();
 
@@ -134,12 +228,12 @@ export class SupabaseService {
         };
       }
 
-      const metadata = user.user_metadata || {};
+      const metadata = (user.user_metadata ?? {}) as Record<string, unknown>;
 
       return {
-        full_name: metadata['full_name'] || user.email || 'Utilizador',
-        role: metadata['role'] || 'user',
-        email: user.email || ''
+        full_name: String(metadata['full_name'] ?? user.email ?? 'Utilizador'),
+        role: String(metadata['role'] ?? 'user'),
+        email: user.email ?? ''
       };
     } catch (error) {
       console.error('Erro ao obter perfil do utilizador:', error);
@@ -153,7 +247,7 @@ export class SupabaseService {
 
   async signIn(email: string, password: string) {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase.auth.signInWithPassword({
           email,
           password
@@ -165,7 +259,7 @@ export class SupabaseService {
         data: response?.data ?? null,
         error: response?.error ?? null
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado no login:', error);
       return {
         data: null,
@@ -176,7 +270,7 @@ export class SupabaseService {
 
   async signUp(email: string, password: string, fullName: string) {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase.auth.signUp({
           email,
           password,
@@ -194,7 +288,7 @@ export class SupabaseService {
         data: response?.data ?? null,
         error: response?.error ?? null
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado no registo:', error);
       return {
         data: null,
@@ -204,102 +298,102 @@ export class SupabaseService {
   }
 
   async signOut() {
-  try {
-    const { error } = await this.supabase.auth.signOut();
+    try {
+      const { error } = await this.supabase.auth.signOut();
 
-    return {
-      error: error ?? null
-    };
-  } catch (error: any) {
-    console.error('Erro inesperado ao terminar sessão:', error);
-    return {
-      error: this.mensagemErro(error, 'Erro ao terminar sessão.')
-    };
-  }
-}
-
-  async criarPedido(dados: any) {
-  try {
-    const user = await this.getUser();
-
-    if (!user) {
       return {
-        data: null,
-        error: new Error('Utilizador não autenticado.')
+        error: error ?? null
+      };
+    } catch (error: unknown) {
+      console.error('Erro inesperado ao terminar sessão:', error);
+      return {
+        error: this.mensagemErro(error, 'Erro ao terminar sessão.')
       };
     }
-
-    const session = await this.getSession();
-
-    const response = await fetch(`${this.apiUrl}/pedidos`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify({
-        user_id: user.id,
-        email: dados.email,
-        tipo_pedido: dados.tipo_pedido,
-        contacto: dados.contacto,
-        distrito: dados.distrito,
-        descricao: dados.descricao
-      })
-    });
-
-    const data = await response.json();
-
-    return {
-      data: data?.data ?? null,
-      error: response.ok ? null : new Error(data?.message || 'Erro ao criar pedido.')
-    };
-  } catch (error: any) {
-    console.error('Erro ao criar pedido:', error);
-    return {
-      data: null,
-      error: error instanceof Error ? error : new Error('Erro ao criar pedido.')
-    };
   }
-}
 
-  async obterPedidos() {
-  try {
-    const session = await this.getSession();
+  async criarPedido(dados: Pedido): Promise<AuthResponse<Pedido | Pedido[]>> {
+    try {
+      const user = await this.getUser();
 
-    if (!session?.access_token) {
-      console.error('Sessão não encontrada.');
-      return null;
-    }
-
-    const response = await fetch(`${this.apiUrl}/pedidos`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.access_token}`
+      if (!user) {
+        return {
+          data: null,
+          error: { message: 'Utilizador não autenticado.' }
+        };
       }
-    });
 
-    const data = await response.json();
+      const session = await this.getSession();
 
-    if (!response.ok) {
-      console.error('Erro ao obter pedidos:', data?.message);
+      const response = await fetch(`${this.apiUrl}/pedidos`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          email: dados.email,
+          tipo_pedido: dados.tipo_pedido,
+          contacto: dados.contacto,
+          distrito: dados.distrito,
+          descricao: dados.descricao
+        })
+      });
+
+      const data = (await response.json()) as FetchApiResponse<Pedido | Pedido[]>;
+
+      return {
+        data: data?.data ?? null,
+        error: response.ok ? null : { message: data?.message || 'Erro ao criar pedido.' }
+      };
+    } catch (error: unknown) {
+      console.error('Erro ao criar pedido:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error : { message: 'Erro ao criar pedido.' }
+      };
+    }
+  }
+
+  async obterPedidos(): Promise<Pedido[] | null> {
+    try {
+      const session = await this.getSession();
+
+      if (!session?.access_token) {
+        console.error('Sessão não encontrada.');
+        return null;
+      }
+
+      const response = await fetch(`${this.apiUrl}/pedidos`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
+
+      const data = (await response.json()) as FetchApiResponse<Pedido[]>;
+
+      if (!response.ok) {
+        console.error('Erro ao obter pedidos:', data?.message);
+        return null;
+      }
+
+      return data?.data || [];
+    } catch (error: unknown) {
+      console.error('Erro inesperado ao obter pedidos:', error);
       return null;
     }
-
-    return data?.data || [];
-  } catch (error: any) {
-    console.error('Erro inesperado ao obter pedidos:', error);
-    return null;
   }
-}
 
-  async carregarPedidos() {
+  async carregarPedidos(): Promise<Pedido[] | null> {
     return await this.obterPedidos();
   }
 
-  async carregarMeusPedidos(email: string) {
+  async carregarMeusPedidos(email: string): Promise<Pedido[] | null> {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase
           .from('pedidos')
           .select('*')
@@ -313,188 +407,197 @@ export class SupabaseService {
         return null;
       }
 
-      return response?.data || [];
-    } catch (error: any) {
+      return (response?.data as Pedido[]) || [];
+    } catch (error: unknown) {
       console.error('Erro inesperado ao carregar meus pedidos:', error);
       return null;
     }
   }
 
-  
+  async atualizarStatusPedido(
+    id: number | string,
+    status: string
+  ): Promise<AuthResponse<Pedido>> {
+    try {
+      const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      });
 
-  async atualizarStatusPedido(id: number | string, status: string) {
-  try {
-    const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ status })
-    });
+      const data = (await response.json()) as FetchApiResponse<Pedido>;
 
-    const data = await response.json();
-
-    return {
-      data: data?.data ?? null,
-      error: response.ok
-        ? null
-        : {
-            message:
-              data?.detail?.message ||
-              data?.detail ||
-              data?.message ||
-              'Erro ao atualizar status do pedido.'
-          }
-    };
-  } catch (error: any) {
-    console.error('Erro inesperado ao atualizar status do pedido:', error);
-    return {
-      data: null,
-      error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
-    };
-  }
-}
-  async atualizarPedidoUtilizador(
-  pedidoId: string,
-  dadosAtualizados: {
-    email: string;
-    tipo_pedido: string;
-    contacto: string;
-    distrito: string;
-    descricao: string;
-  }
-) {
-  try {
-    const session = await this.getSession();
-
-    const response = await fetch(`${this.apiUrl}/pedidos/${pedidoId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify(dadosAtualizados)
-    });
-
-    const data = await response.json();
-
-    return {
-      data: data?.data ?? null,
-      error: response.ok ? null : new Error(data?.message || 'Erro ao atualizar pedido.')
-    };
-  } catch (error: any) {
-    console.error('Erro ao atualizar pedido:', error);
-    return {
-      data: null,
-      error: error instanceof Error ? error : new Error('Erro ao atualizar pedido.')
-    };
-  }
-}
-
-  async apagarPedido(idOuObjeto: any) {
-  try {
-    const idBruto =
-      typeof idOuObjeto === 'object' && idOuObjeto !== null
-        ? idOuObjeto.id
-        : idOuObjeto;
-
-    const idNormalizado = String(idBruto ?? '').trim();
-
-    console.log('apagarPedido -> idBruto:', idBruto);
-    console.log('apagarPedido -> idNormalizado:', idNormalizado);
-
-    if (!idNormalizado) {
       return {
-        error: {
-          message: 'ID inválido para apagar o pedido.'
-        }
+        data: data?.data ?? null,
+        error: response.ok
+          ? null
+          : {
+              message:
+                data?.detail && typeof data.detail === 'object'
+                  ? data.detail.message || data?.message || 'Erro ao atualizar status do pedido.'
+                  : typeof data?.detail === 'string'
+                    ? data.detail
+                    : data?.message || 'Erro ao atualizar status do pedido.'
+            }
+      };
+    } catch (error: unknown) {
+      console.error('Erro inesperado ao atualizar status do pedido:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao atualizar status do pedido.')
       };
     }
+  }
 
-    const session = await this.getSession();
-
-    const response = await fetch(`${this.apiUrl}/pedidos/${idNormalizado}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(session?.access_token
-          ? { Authorization: `Bearer ${session.access_token}` }
-          : {})
-      }
-    });
-
-    let data: any = null;
+  async atualizarPedidoUtilizador(
+    pedidoId: string,
+    dadosAtualizados: PedidoAtualizacaoUtilizador
+  ): Promise<AuthResponse<Pedido>> {
     try {
-      data = await response.json();
-    } catch {
-      data = null;
+      const session = await this.getSession();
+
+      const response = await fetch(`${this.apiUrl}/pedidos/${pedidoId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`
+        },
+        body: JSON.stringify(dadosAtualizados)
+      });
+
+      const data = (await response.json()) as FetchApiResponse<Pedido>;
+
+      return {
+        data: data?.data ?? null,
+        error: response.ok ? null : { message: data?.message || 'Erro ao atualizar pedido.' }
+      };
+    } catch (error: unknown) {
+      console.error('Erro ao atualizar pedido:', error);
+      return {
+        data: null,
+        error: error instanceof Error ? error : { message: 'Erro ao atualizar pedido.' }
+      };
     }
-
-    console.log('DELETE response.status:', response.status);
-    console.log('DELETE response.data:', data);
-
-    return {
-      error: response.ok
-        ? null
-        : { message: data?.message || data?.detail || 'Erro ao apagar pedido.' }
-    };
-  } catch (error: any) {
-    console.error('Erro inesperado ao apagar pedido:', error);
-    return {
-      error: this.mensagemErro(error, 'Erro ao apagar pedido.')
-    };
   }
-}
 
-  async encaminharPedido(id: number | string, dados: any) {
-  try {
-    const session = await this.getSession();
+  async apagarPedido(
+    idOuObjeto: string | number | { id?: string | number | null }
+  ): Promise<DeleteResponse> {
+    try {
+      const idBruto =
+        typeof idOuObjeto === 'object' && idOuObjeto !== null
+          ? idOuObjeto.id
+          : idOuObjeto;
 
-    const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session?.access_token}`
-      },
-      body: JSON.stringify({
-        ...dados,
-        status: 'Encaminhado'
-      })
-    });
+      const idNormalizado = String(idBruto ?? '').trim();
 
-    const data = await response.json();
+      console.log('apagarPedido -> idBruto:', idBruto);
+      console.log('apagarPedido -> idNormalizado:', idNormalizado);
 
-    return {
-      data: data?.data ?? null,
-      error: response.ok ? null : new Error(data?.message || 'Erro ao encaminhar pedido.')
-    };
-  } catch (error: any) {
-    console.error('Erro ao encaminhar pedido:', error);
-    return {
-      data: null,
-      error: this.mensagemErro(error, 'Erro ao encaminhar pedido.')
-    };
+      if (!idNormalizado) {
+        return {
+          error: {
+            message: 'ID inválido para apagar o pedido.'
+          }
+        };
+      }
+
+      const session = await this.getSession();
+
+      const response = await fetch(`${this.apiUrl}/pedidos/${idNormalizado}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {})
+        }
+      });
+
+      let data: FetchApiResponse<null> | null = null;
+      try {
+        data = (await response.json()) as FetchApiResponse<null>;
+      } catch {
+        data = null;
+      }
+
+      console.log('DELETE response.status:', response.status);
+      console.log('DELETE response.data:', data);
+
+      return {
+        error: response.ok
+          ? null
+          : {
+              message:
+                data?.message ||
+                (typeof data?.detail === 'string'
+                  ? data.detail
+                  : data?.detail?.message) ||
+                'Erro ao apagar pedido.'
+            }
+      };
+    } catch (error: unknown) {
+      console.error('Erro inesperado ao apagar pedido:', error);
+      return {
+        error: this.mensagemErro(error, 'Erro ao apagar pedido.')
+      };
+    }
   }
-}
 
-  async obterRecursos() {
-  try {
-    const response = await fetch(`${this.apiUrl}/recursos?status=aprovado`);
-    const data = await response.json();
-    return data?.data || [];
-  } catch (error: any) {
-    console.error('Erro ao obter recursos:', error);
-    return null;
+  async encaminharPedido(
+    id: number | string,
+    dados: EncaminhamentoPayload
+  ): Promise<AuthResponse<Pedido>> {
+    try {
+      const session = await this.getSession();
+
+      const response = await fetch(`${this.apiUrl}/pedidos/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session?.access_token ?? ''}`
+        },
+        body: JSON.stringify({
+          ...dados,
+          status: 'Encaminhado'
+        })
+      });
+
+      const data = (await response.json()) as FetchApiResponse<Pedido>;
+
+      return {
+        data: data?.data ?? null,
+        error: response.ok ? null : { message: data?.message || 'Erro ao encaminhar pedido.' }
+      };
+    } catch (error: unknown) {
+      console.error('Erro ao encaminhar pedido:', error);
+      return {
+        data: null,
+        error: this.mensagemErro(error, 'Erro ao encaminhar pedido.')
+      };
+    }
   }
-}
 
-  async carregarRecursos() {
+  async obterRecursos(): Promise<Recurso[] | null> {
+    try {
+      const response = await fetch(`${this.apiUrl}/recursos?status=aprovado`);
+      const data = (await response.json()) as FetchApiResponse<Recurso[]>;
+      return data?.data || [];
+    } catch (error: unknown) {
+      console.error('Erro ao obter recursos:', error);
+      return null;
+    }
+  }
+
+  async carregarRecursos(): Promise<Recurso[] | null> {
     return await this.obterRecursos();
   }
 
-  async obterRecursosPendentes() {
+  async obterRecursosPendentes(): Promise<Recurso[] | null> {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase
           .from('recursos')
           .select('*')
@@ -507,28 +610,28 @@ export class SupabaseService {
         return null;
       }
 
-      const recursos = response?.data || [];
-      return recursos.filter((recurso: any) => this.recursoEstaPendente(recurso));
-    } catch (error: any) {
+      const recursos = (response?.data as Recurso[]) || [];
+      return recursos.filter((recurso) => this.recursoEstaPendente(recurso));
+    } catch (error: unknown) {
       console.error('Erro inesperado ao obter recursos pendentes:', error);
       return null;
     }
   }
 
-  async carregarRecursosPendentes() {
+  async carregarRecursosPendentes(): Promise<Recurso[] | null> {
     return await this.obterRecursosPendentes();
   }
 
   async sugerirRecurso(
-    nomeOuObjeto: string | any,
+    nomeOuObjeto: string | Partial<Recurso>,
     tipo?: string,
     contacto?: string,
     website?: string,
     distrito?: string,
     descricao?: string
-  ) {
+  ): Promise<AuthResponse<Recurso[]>> {
     try {
-      let payloadBase: any;
+      let payloadBase: Partial<Recurso>;
 
       if (typeof nomeOuObjeto === 'object' && nomeOuObjeto !== null) {
         payloadBase = {
@@ -549,7 +652,7 @@ export class SupabaseService {
 
       payloadBase.contacto = String(payloadBase.contacto ?? '').replace(/\D/g, '');
 
-      let response: any = await this.executarComTimeout(
+      let response = await this.executarComTimeout(
         this.supabase
           .from('recursos')
           .insert([{ ...payloadBase, status: 'pendente' }])
@@ -557,7 +660,10 @@ export class SupabaseService {
         8000
       );
 
-      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")) {
+      if (
+        response?.error &&
+        String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")
+      ) {
         response = await this.executarComTimeout(
           this.supabase
             .from('recursos')
@@ -567,7 +673,10 @@ export class SupabaseService {
         );
       }
 
-      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'estado' column")) {
+      if (
+        response?.error &&
+        String(response.error.message || '').toLowerCase().includes("could not find the 'estado' column")
+      ) {
         response = await this.executarComTimeout(
           this.supabase
             .from('recursos')
@@ -578,10 +687,10 @@ export class SupabaseService {
       }
 
       return {
-        data: response?.data ?? null,
+        data: (response?.data as Recurso[]) ?? null,
         error: response?.error ?? null
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado ao sugerir recurso:', error);
       return {
         data: null,
@@ -590,9 +699,9 @@ export class SupabaseService {
     }
   }
 
-  async aprovarRecurso(id: number | string) {
+  async aprovarRecurso(id: number | string): Promise<AuthResponse<Recurso[]>> {
     try {
-      let response: any = await this.executarComTimeout(
+      let response = await this.executarComTimeout(
         this.supabase
           .from('recursos')
           .update({ status: 'aprovado' })
@@ -601,7 +710,10 @@ export class SupabaseService {
         8000
       );
 
-      if (response?.error && String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")) {
+      if (
+        response?.error &&
+        String(response.error.message || '').toLowerCase().includes("could not find the 'status' column")
+      ) {
         response = await this.executarComTimeout(
           this.supabase
             .from('recursos')
@@ -613,10 +725,10 @@ export class SupabaseService {
       }
 
       return {
-        data: response?.data ?? null,
+        data: (response?.data as Recurso[]) ?? null,
         error: response?.error ?? null
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado ao aprovar recurso:', error);
       return {
         data: null,
@@ -625,9 +737,9 @@ export class SupabaseService {
     }
   }
 
-  async apagarRecursoPendente(id: number | string) {
+  async apagarRecursoPendente(id: number | string): Promise<DeleteResponse> {
     try {
-      const response: any = await this.executarComTimeout(
+      const response = await this.executarComTimeout(
         this.supabase
           .from('recursos')
           .delete()
@@ -638,7 +750,7 @@ export class SupabaseService {
       return {
         error: response?.error ?? null
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro inesperado ao apagar recurso pendente:', error);
       return {
         error: this.mensagemErro(error, 'Erro ao apagar recurso.')

@@ -1,7 +1,7 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SupabaseService } from '../../services/supabase';
+import { Recurso, SupabaseService } from '../../services/supabase';
 
 @Component({
   selector: 'app-detalhe-recurso',
@@ -11,7 +11,7 @@ import { SupabaseService } from '../../services/supabase';
   styleUrls: ['./recurso-detalhe.css']
 })
 export class DetalheRecursoComponent implements OnInit {
-  recurso: any = null;
+  recurso: Recurso | null = null;
   carregando = true;
 
   constructor(
@@ -20,18 +20,18 @@ export class DetalheRecursoComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {}
 
-  async ngOnInit() {
+  async ngOnInit(): Promise<void> {
     await this.carregarDetalhe();
   }
 
-  async carregarDetalhe() {
+  async carregarDetalhe(): Promise<void> {
     this.carregando = true;
     this.cdr.detectChanges();
 
     const idParam = this.route.snapshot.paramMap.get('id');
     const id = Number(idParam);
 
-    if (!idParam || isNaN(id)) {
+    if (!idParam || Number.isNaN(id)) {
       console.error('ID inválido na rota:', idParam);
       this.recurso = null;
       this.carregando = false;
@@ -43,7 +43,7 @@ export class DetalheRecursoComponent implements OnInit {
       .from('recursos')
       .select('*')
       .eq('id', id)
-      .single();
+      .single<Recurso>();
 
     if (error) {
       console.error('Erro ao carregar detalhe do recurso:', error.message);
@@ -53,7 +53,7 @@ export class DetalheRecursoComponent implements OnInit {
       return;
     }
 
-    this.recurso = data;
+    this.recurso = data ?? null;
     this.carregando = false;
     this.cdr.detectChanges();
   }
