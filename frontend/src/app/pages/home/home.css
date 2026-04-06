@@ -1,6 +1,6 @@
 .page-container {
   min-height: 100vh;
-  background: #eee3e7; /* Rosa muito claro para o fundo geral */
+  background: #eee3e7;
   color: #3d3131;
   font-family: Arial, sans-serif;
 }
@@ -9,207 +9,251 @@
   padding: 24px 60px 50px;
 }
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 80px;
+.help-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 60px 64px;
 }
 
-.brand {
-  font-size: 2rem;
-  margin: 0;
-  font-family: Georgia, serif;
-  color: #3d3131;
-}
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-}
-
-.link-login {
-  text-decoration: none;
-  color: #3d3131;
-  font-weight: 500;
-}
-
-.btn-top {
-  text-decoration: none;
-  background: #f6abb6;
-  color: #ffffff; /* Texto branco */
-  padding: 12px 18px;
-  border-radius: 18px;
-  font-weight: 700;
+.hero-content,
+.section-header {
+  text-align: center;
 }
 
 .hero-content {
   max-width: 800px;
   margin: 0 auto;
-  text-align: center;
 }
 
-.content .eyebrow {
-  display: inline-block;
-  color: #f6abb6; /* Texto rosa forte */
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 18px;
+/* TOPO */
+.topbar,
+.topbar-actions,
+.chat-input,
+.chat-atalhos,
+.custom-modal-actions {
+  display: flex;
+  align-items: center;
 }
 
-.content h2 {
+.topbar {
+  justify-content: space-between;
+  margin-bottom: 80px;
+}
+
+.topbar-actions {
+  gap: 18px;
+}
+
+.brand,
+.content h2,
+.section-header h2,
+.card h3,
+.direito-item h3 {
   font-family: Georgia, serif;
-  font-size: 2.5rem;
-  line-height: 1.1;
-  margin: 0 0 20px;
 }
 
-.content p {
-  font-size: 1.2rem;
-  line-height: 1.6;
+.brand {
+  margin: 0;
+  font-size: 2rem;
   color: #3d3131;
+}
+
+.link-login,
+.section-header p,
+.card p,
+.bot-msg,
+.direito-item p {
+  color: #3d3131;
+}
+
+.link-login {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* BOTÕES */
+.btn-top,
+.btn-primary,
+.btn-secondary,
+.atalho-btn {
+  font-weight: 700;
+  transition: 0.2s ease;
+}
+
+.btn-top,
+.btn-primary,
+.atalho-btn {
+  text-decoration: none;
+}
+
+.btn-top,
+.btn-primary,
+.btn-secondary {
+  border: none;
+}
+
+.btn-top {
+  display: inline-block;
+  padding: 12px 18px;
+  border-radius: 18px;
+  background: #f6abb6;
+  color: #ffffff;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 16px 30px;
+  border-radius: 24px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.btn-primary {
+  margin-right: 12px;
+  background: #f6abb6;
+  color: #ffffff;
+}
+
+.btn-secondary {
+  margin-right: 12px;
+  background: #ffffff;
+  color: #3d3131;
+  border: 1px solid #ead5dc;
+}
+
+.atalho-btn {
+  padding: 12px 18px;
+  border: 1px solid #ead5dc;
+  border-radius: 22px;
+  background: #ffffff;
+  color: #3d3131;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.atalho-btn:hover,
+.direito-item:hover {
+  background: #fdf4f6;
+  border-color: #f6abb6;
 }
 
 .hero-buttons {
   margin-top: 30px;
 }
 
-.btn-primary {
-  margin-right: 12px;
-  border: none;
-  padding: 16px 30px;
-  border-radius: 24px;
-  font-size: 1rem;
+/* HERO */
+.content .eyebrow {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: #f6abb6;
+  font-size: 0.95rem;
   font-weight: 700;
-  cursor: pointer;
-  background: #f6abb6;
-  color: #ffffff; /* Texto branco */
+  letter-spacing: 1px;
 }
 
-.btn-secondary {
-   margin-right: 12px;
-  border: none;
-  padding: 16px 30px;
-  border-radius: 24px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  background: #ffffff;
-  color: #3d3131; /* Texto escuro */
-  border: 1px solid #ead5dc;
+.content h2 {
+  margin: 0 0 20px;
+  font-size: 2.5rem;
+  line-height: 1.1;
 }
 
-.help-section {
-  padding: 0 60px 64px;
-  max-width: 1100px;
-  margin: 0 auto;
+.content p {
+  color: #3d3131;
+  font-size: 1.2rem;
+  line-height: 1.6;
 }
 
+/* SECÇÕES */
 .section-header {
-  text-align: center;
   margin-bottom: 40px;
 }
 
 .section-header h2 {
-  font-family: Georgia, serif;
   font-size: 2.8rem;
 }
 
-.section-header p {
-  color: #3d3131;
+.cards-section,
+.direitos-menu {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .cards-section {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
   gap: 26px;
 }
 
-.card {
-  border: 1px solid #ead5dc;
-  border-radius: 24px;
-  padding: 30px;
+.card,
+.chat-box,
+.direito-item {
   background: #ffffff;
+  border: 1px solid #ead5dc;
+}
+
+.card {
+  padding: 30px;
+  border-radius: 24px;
 }
 
 .icon-box {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  background: #eee3e7; /* Rosa muito claro */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
+  width: 50px;
+  height: 50px;
   margin-bottom: 20px;
-  color: #f6abb6; /* Texto rosa forte */
+  border-radius: 14px;
+  background: #eee3e7;
+  color: #f6abb6;
+  font-size: 1.4rem;
 }
 
 .card h3 {
-  font-family: Georgia, serif;
   font-size: 1.5rem;
 }
 
-.card p {
-  color: #3d3131;
-}
-
-/* =========================
-   ASSISTENTE JURÍDICO
-========================= */
-
-.juridico-section {
-  background: #fff7f9;
+/* ASSISTENTE JURÍDICO + DIREITOS */
+.juridico-section,
+.direitos-section {
+  padding: 40px 32px;
   border: 1px solid #e7d3d9;
   border-radius: 32px;
-  padding: 40px 32px;
-  margin-bottom: 56px;
+  background: #fff7f9;
   box-shadow: 0 10px 24px rgba(61, 49, 49, 0.05);
 }
 
+.juridico-section {
+  margin-bottom: 56px;
+}
+
+.direitos-section {
+  margin-top: 0;
+}
+
 .chat-atalhos {
-  display: flex;
   flex-wrap: wrap;
-  gap: 12px;
   justify-content: center;
+  gap: 12px;
   margin-bottom: 24px;
 }
 
-.atalho-btn {
-  border: 1px solid #ead5dc;
-  background: #ffffff;
-  color: #3d3131;
-  border-radius: 22px;
-  padding: 12px 18px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.atalho-btn:hover {
-  background: #fdf4f6;
-  border-color: #f6abb6;
+.chat-box,
+.direito-item {
+  box-shadow: 0 8px 20px rgba(61, 49, 49, 0.05);
 }
 
 .chat-box {
-  background: #ffffff;
-  border: 1px solid #ead5dc;
-  border-radius: 24px;
-  padding: 18px;
   min-height: 280px;
   max-height: 380px;
   overflow-y: auto;
-  box-shadow: 0 8px 20px rgba(61, 49, 49, 0.05);
+  padding: 18px;
+  border-radius: 24px;
 }
 
 .chat-msg {
   max-width: 80%;
+  margin-bottom: 12px;
   padding: 14px 16px;
   border-radius: 18px;
-  margin-bottom: 12px;
   line-height: 1.5;
   word-break: break-word;
 }
@@ -225,14 +269,11 @@
 .bot-msg {
   margin-right: auto;
   background: #f8eef1;
-  color: #3d3131;
   border: 1px solid #ead5dc;
   border-bottom-left-radius: 6px;
 }
 
 .chat-input {
-  display: flex;
-  align-items: center;
   gap: 12px;
   margin-top: 18px;
 }
@@ -240,13 +281,13 @@
 .chat-input input {
   flex: 1;
   height: 52px;
-  border-radius: 18px;
-  border: 1px solid #ead5dc;
   padding: 0 18px;
-  font-size: 1rem;
-  outline: none;
+  border: 1px solid #ead5dc;
+  border-radius: 18px;
   background: #ffffff;
   color: #3d3131;
+  font-size: 1rem;
+  outline: none;
 }
 
 .chat-input input:focus {
@@ -255,24 +296,49 @@
 }
 
 .chat-input .btn-primary {
-  margin-right: 0;
   height: 52px;
+  margin-right: 0;
   padding: 0 24px;
   white-space: nowrap;
 }
 
 .juridico-actions {
-  margin-top: 40px;     /* separa do chat */
-  margin-bottom: 40px;  /* separa da próxima secção */
+  margin: 40px 0;
   text-align: center;
 }
 
-/* =========================
-   RESPONSIVO
-========================= */
+/* DIREITOS */
+.direitos-menu {
+  gap: 16px;
+}
 
+.direito-item {
+  padding: 18px;
+  border-radius: 24px;
+  cursor: pointer;
+  font-size: small;
+  transition: 0.2s ease;
+}
+
+.direito-item:hover {
+  transform: translateY(-2px);
+}
+
+.direito-item h3 {
+  margin-bottom: 8px;
+  font-size: medium;
+}
+
+.direito-item p {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* RESPONSIVO */
 @media (max-width: 900px) {
-  .cards-section {
+  .cards-section,
+  .direitos-menu {
     grid-template-columns: 1fr;
   }
 
@@ -284,12 +350,9 @@
     padding: 24px 24px 60px;
   }
 
-  .content h2 {
-    font-size: 2.0rem;
-  }
-
+  .content h2,
   .section-header h2 {
-    font-size: 2.0rem;
+    font-size: 2rem;
   }
 
   .chat-msg {
@@ -298,18 +361,21 @@
 }
 
 @media (max-width: 700px) {
-  .topbar {
+  .topbar,
+  .hero-buttons,
+  .chat-input {
     flex-direction: column;
+  }
+
+  .topbar {
     gap: 18px;
     margin-bottom: 50px;
     text-align: center;
   }
 
   .hero-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
     align-items: center;
+    gap: 12px;
   }
 
   .btn-primary,
@@ -320,7 +386,6 @@
   }
 
   .chat-input {
-    flex-direction: column;
     align-items: stretch;
   }
 
@@ -331,61 +396,5 @@
 
   .juridico-section {
     padding: 28px 18px;
-  }
-}
-
-/* =========================
-   DIREITOS (COMPACTO)
-========================= */
-
-.direitos-section {
-  background: #fff7f9; /* igual ao chat */
-  border: 1px solid #e7d3d9;
-  border-radius: 32px;
-  padding: 40px 32px;
-  margin-top: 0;
-  box-shadow: 0 10px 24px rgba(61, 49, 49, 0.05);
-}
-
-.direitos-menu {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.direito-item {
-  font-size: small;
-  background: #ffffff;
-  border: 1px solid #ead5dc;
-  border-radius: 24px;
-  padding: 18px;
-  cursor: pointer;
-  transition: 0.2s ease;
-  box-shadow: 0 8px 20px rgba(61, 49, 49, 0.05);
-}
-
-.direito-item:hover {
-  background: #fdf4f6;
-  border-color: #f6abb6;
-  transform: translateY(-2px);
-}
-
-.direito-item h3 {
-  font-family: Georgia, serif;
-  font-size: medium;
-  margin-bottom: 8px;
-}
-
-.direito-item p {
-  margin-top: 10px;
-  color: #3d3131;
-  font-size: 0.8rem;
-  line-height: 1.5;
-}
-
-/* RESPONSIVO */
-@media (max-width: 900px) {
-  .direitos-menu {
-    grid-template-columns: 1fr;
   }
 }
